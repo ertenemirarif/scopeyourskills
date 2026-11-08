@@ -653,7 +653,7 @@ $("view").addEventListener("click",e=>{
   const it=t.closest("[data-id]"); if(it)openDrawer(+it.dataset.id,it);
 });
 $("view").addEventListener("keydown",e=>{const it=e.target.closest(".item[data-id]");if(it&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDrawer(+it.dataset.id,it);}});
-$("view").addEventListener("input",e=>{if(e.target.id==="sortBy"){sortBy=e.target.value;render();}});
+$("view").addEventListener("input",e=>{if(e.target.id==="sortBy"){sortBy=e.target.value;render();}if(e.target.id==="xSort"){xSort=e.target.value;store.set("ss-xsort",xSort);limit=60;render();}});
 
 /* ---------- drawer ---------- */
 /* literal quoting: a folder name can never become part of the command */
@@ -702,7 +702,7 @@ matchMedia("(min-width:861px)").addEventListener("change",e=>{if(e.matches)close
 /* ===================== Usage, X-ray and Audit modes ===================== */
 const I18N2={
   tr:{colName:"Skill",usage:"Kullanım",usageLead:"Kurduğun skill'lerden hangileri gerçekten çalışıyor, ne kadar token harcıyor, hangileri hiç kullanılmamış.",
-    xrayNav:"Röntgen",xrayLead:"Her skill'in adım adım akışı ve 0-100 kalite puanı. En düşük puanlılar önce. (Fikir: silvesterdivas/skillscope)",
+    sScore:"Puana göre",xrayNav:"Röntgen",xrayLead:"Her skill'in adım adım akışı ve 0-100 kalite puanı. En düşük puanlılar önce. (Fikir: silvesterdivas/skillscope)",
     audit:"Denetim",auditLead:"Token harcamadan yapısal kontroller ve bir isteği hangi skill'lerin kapacağını gösteren simülatör. (Fikir: amd/skillscope)",
     uPeriod:"Kayıt aralığı: {a} – {b} · {s} oturum",uUsed:"kullanılan skill",uNever:"hiç kullanılmamış",uTokens:"ölçülen token",uIdle:"boşta yük / oturum",
     uIdleHelp:"Kullanılmayan skill'lerin açıklamaları da her oturumda Claude'un bağlamına girer. Bu sayı açıklama uzunluğundan yapılan kaba bir üst sınır tahminidir (karakter / 4).",
@@ -723,7 +723,7 @@ const I18N2={
     aPlaceholder:"Örn: bu PDF'i özetleyip sunum yap",aInclDl:"İndirilmiş ama kurulu olmayanları da kat",aClose:"Yakın yarış: bu skill'ler aynı isteği kapmak için yarışabilir.",
     aNoMatch:"Eşleşen skill yok.",aClean:"Yapısal sorun bulunmadı.",dUsage:"Kullanım",dXray:"Röntgen",dLint:"Denetim",more2:"+{n} daha"},
   en:{colName:"Skill",usage:"Usage",usageLead:"Which installed skills actually run, how many tokens they use, and which have never been used.",
-    xrayNav:"X-ray",xrayLead:"Each skill's step-by-step flow and a 0-100 quality score, lowest first. (Idea: silvesterdivas/skillscope)",
+    sScore:"By score",xrayNav:"X-ray",xrayLead:"Each skill's step-by-step flow and a 0-100 quality score, lowest first. (Idea: silvesterdivas/skillscope)",
     audit:"Audit",auditLead:"Structural checks that cost no tokens, and a simulator that shows which skills would compete for a request. (Idea: amd/skillscope)",
     uPeriod:"Transcripts: {a} – {b} · {s} sessions",uUsed:"skills used",uNever:"never used",uTokens:"measured tokens",uIdle:"idle load / session",
     uIdleHelp:"Unused skills still put their description into Claude's context in every session. This is a rough upper-bound estimate from description length (characters / 4).",
@@ -744,7 +744,7 @@ const I18N2={
     aPlaceholder:"e.g. summarise this PDF and turn it into slides",aInclDl:"Include downloaded, not installed",aClose:"Close race: these skills may compete for the same request.",
     aNoMatch:"No matching skill.",aClean:"No structural problems found.",dUsage:"Usage",dXray:"X-ray",dLint:"Audit",more2:"+{n} more"},
   zh:{colName:"技能",usage:"使用情况",usageLead:"已安装的技能中哪些真正在运行、消耗多少 token、哪些从未使用。",
-    xrayNav:"透视",xrayLead:"每个技能的分步流程和 0-100 质量评分，最低分在前。（思路来自 silvesterdivas/skillscope）",
+    sScore:"按评分",xrayNav:"透视",xrayLead:"每个技能的分步流程和 0-100 质量评分，最低分在前。（思路来自 silvesterdivas/skillscope）",
     audit:"审查",auditLead:"不消耗 token 的结构检查，以及显示哪些技能会争夺同一请求的模拟器。（思路来自 amd/skillscope）",
     uPeriod:"记录范围：{a} – {b} · {s} 个会话",uUsed:"个已使用技能",uNever:"从未使用",uTokens:"实测 token",uIdle:"每会话闲置负载",
     uIdleHelp:"未使用的技能，其描述仍会在每个会话中进入 Claude 的上下文。此数为按描述长度（字符 / 4）粗略估算的上限。",
@@ -765,7 +765,7 @@ const I18N2={
     aPlaceholder:"例如：总结这个 PDF 并做成幻灯片",aInclDl:"包括已下载但未安装的",aClose:"接近竞争：这些技能可能争夺同一请求。",
     aNoMatch:"没有匹配的技能。",aClean:"未发现结构问题。",dUsage:"使用情况",dXray:"透视",dLint:"审查",more2:"另有 {n} 个"},
   es:{colName:"Skill",usage:"Uso",usageLead:"Qué skills instaladas se ejecutan de verdad, cuántos tokens gastan y cuáles no se han usado nunca.",
-    xrayNav:"Rayos X",xrayLead:"El flujo paso a paso de cada skill y una puntuación de calidad de 0 a 100, la más baja primero. (Idea: silvesterdivas/skillscope)",
+    sScore:"Por puntuación",xrayNav:"Rayos X",xrayLead:"El flujo paso a paso de cada skill y una puntuación de calidad de 0 a 100, la más baja primero. (Idea: silvesterdivas/skillscope)",
     audit:"Auditoría",auditLead:"Comprobaciones estructurales sin coste de tokens y un simulador que muestra qué skills competirían por una petición. (Idea: amd/skillscope)",
     uPeriod:"Registros: {a} – {b} · {s} sesiones",uUsed:"skills usadas",uNever:"nunca usadas",uTokens:"tokens medidos",uIdle:"carga inactiva / sesión",
     uIdleHelp:"Las skills sin uso también meten su descripción en el contexto de Claude en cada sesión. Es una estimación aproximada de máximo según la longitud de la descripción (caracteres / 4).",
@@ -818,12 +818,30 @@ function viewUsage(rows){
 }
 let onlyNever=false;
 
+let xSort=store.get("ss-xsort")||"score";
 function viewXray(rows){
-  const list=uniqueRows(rows).filter(s=>s.quality).sort((a,b)=>a.quality.score-b.quality.score||a.title.localeCompare(b.title,LANG));
-  return `<div class="list">${list.slice(0,limit).map(s=>`<div class="item" style="--c:${CAT[s.category].color}" data-id="${s.id}" role="button" tabindex="0">
+  const byScore=(a,b)=>a.quality.score-b.quality.score||a.title.localeCompare(b.title,LANG);
+  let list=uniqueRows(rows).filter(s=>s.quality);
+  if(xSort==="cat"){const cnt={};list.forEach(s=>cnt[s.category]=(cnt[s.category]||0)+1);
+    list.sort((a,b)=>(cnt[b.category]-cnt[a.category])||(CAT[a.category].order-CAT[b.category].order)||byScore(a,b));}
+  else if(xSort==="name")list.sort((a,b)=>a.title.localeCompare(b.title,LANG));
+  else list.sort(byScore);
+  // per-category count and average score for the group headers
+  const agg={};list.forEach(s=>{const g=agg[s.category]=agg[s.category]||{n:0,sum:0};g.n++;g.sum+=s.quality.score;});
+  let band=1,prev=null,html="";
+  list.slice(0,limit).forEach((s,i)=>{
+    if(xSort==="cat"&&s.category!==prev){band^=1;const g=agg[s.category];
+      html+=`<div class="ghead" style="--c:${CAT[s.category].color}"><span class="ic">${icon(s.category)}</span>${esc(catLabel(s.category))}<span class="count">${g.n}</span><span class="muted small" style="margin-left:auto;font-weight:600">Ø ${Math.round(g.sum/g.n)}</span></div>`;}
+    if(xSort!=="cat")band=i%2;
+    prev=s.category;
+    html+=`<div class="item band-${band?"b":"a"}" style="--c:${CAT[s.category].color}" data-id="${s.id}" role="button" tabindex="0">
       ${tile(s.category)}<div class="body"><div class="nm">${esc(s.title)}</div><div class="ds">${s.quality.fixes.length?esc(fixText(s.quality.fixes[0])):T.xNoFix}</div></div>
       <div class="meta"><span class="muted small">${esc(pkgOf(s).title)}</span></div><div class="meta">${scoreBar(s.quality)}</div>
-      <div class="act"><button type="button" class="btn ghost" data-id="${s.id}">${T.open} ${icon("ext")}</button></div></div>`).join("")||`<div class="empty">${T.empty}</div>`}
+      <div class="act"><button type="button" class="btn ghost" data-id="${s.id}">${T.open} ${icon("ext")}</button></div></div>`;
+  });
+  const sel=`<label class="field" style="min-height:40px"><span class="muted small">${T.sort}</span><select id="xSort">${[["score",T.sScore],["cat",T.sCat],["name",T.sName]].map(([v,l])=>`<option value="${v}"${v===xSort?" selected":""}>${l}</option>`).join("")}</select></label>`;
+  return `<div class="cat-head"><h2>${fmt(T.nSkills,{n:list.length})}</h2>${sel}</div>
+    <div class="list">${html||`<div class="empty">${T.empty}</div>`}
     ${list.length>limit?`<div class="pager"><button type="button" class="btn ghost" id="loadMore">${fmt(T.loadMore,{n:list.length-limit})}</button></div>`:""}</div>`;
 }
 
