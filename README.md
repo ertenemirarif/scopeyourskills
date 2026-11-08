@@ -38,7 +38,7 @@ Scope Your Skills scans every `SKILL.md` on your machine (Claude Code, Claude De
 Clone the repo into your personal skills folder and ask Claude for it:
 
 ```bash
-git clone https://github.com/ertenemirarif/scopeyourskills.git ~/.claude/skills/scopeyourskills
+git clone https://github.com/ertenemirarif/scope-your-skills.git ~/.claude/skills/scope-your-skills
 ```
 
 Then say *"scope your skills"* (or *"skill envanterimi çıkar"*). Claude scans, translates the missing descriptions into English, Turkish, Chinese and Spanish itself (no API key), builds the dashboard and opens it. Ask for another language ("also in German") and it adds that too. The steps are in [SKILL.md](SKILL.md).
@@ -48,8 +48,8 @@ Then say *"scope your skills"* (or *"skill envanterimi çıkar"*). Claude scans,
 Python 3.9+ only, no packages to install. On Windows, use `py -3` wherever this README says `python`.
 
 ```bash
-git clone https://github.com/ertenemirarif/scopeyourskills.git
-cd scopeyourskills
+git clone https://github.com/ertenemirarif/scope-your-skills.git
+cd scope-your-skills
 python scopeyourskills.py --open
 ```
 
