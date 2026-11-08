@@ -92,7 +92,7 @@ class Audit(unittest.TestCase):
         self.assertIn("score", s["quality"])
         self.assertIn("flow", s["xray"])
         self.assertIn("missing_ref", s["lint"])
-        html = (Path(out) / "scope-your-skills.html").read_text(encoding="utf-8")
+        html = (Path(out) / "scopeyourskills.html").read_text(encoding="utf-8")
         self.assertIn('"quality"', html)
         self.assertIn("function routeMatch(", html)   # in-browser routing simulator
 

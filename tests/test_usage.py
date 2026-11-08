@@ -69,7 +69,7 @@ class Usage(unittest.TestCase):
         self.assertNotIn("compact", json.dumps(data["usage"]))
         self.assertEqual(data["usage"]["never"], 1)
         # transcript text never reaches the output
-        html = (Path(out) / "scope-your-skills.html").read_text(encoding="utf-8")
+        html = (Path(out) / "scopeyourskills.html").read_text(encoding="utf-8")
         self.assertNotIn("command-args", html)
 
     def test_off_by_default(self):

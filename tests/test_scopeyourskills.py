@@ -43,7 +43,7 @@ class ScopeYourSkillsTest(unittest.TestCase):
         self.assertEqual([v["name"] for v in self.data["overlaps"]["versions"]], ["pptx-maker"])
 
     def test_html_written(self):
-        html = (Path(self.tmp.name) / "scope-your-skills.html").read_text(encoding="utf-8")
+        html = (Path(self.tmp.name) / "scopeyourskills.html").read_text(encoding="utf-8")
         self.assertNotIn("/*__DATA__*/null", html)
 
 

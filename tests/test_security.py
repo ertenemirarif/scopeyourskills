@@ -55,11 +55,11 @@ class EmbeddingAndArtifact(unittest.TestCase):  # S11
         write(tmp / "a" / "skills" / "x" / "SKILL.md",
               "---\nname: x\ndescription: \"evil <!--<script> and text <html <body> </script>\"\n---\n")
         rc, out, _ = run_main("--path", f"R={tmp}")
-        html = (Path(out) / "scope-your-skills.html").read_text(encoding="utf-8")
+        html = (Path(out) / "scopeyourskills.html").read_text(encoding="utf-8")
         start = html.index("const DATA = ") + len("const DATA = ")
         end = html.index(";\nconst LSTORE") if ";\nconst LSTORE" in html else html.index("\n", start)
         self.assertNotIn("<", html[start:end])
-        art = (Path(out) / "scope-your-skills.artifact.html").read_text(encoding="utf-8")
+        art = (Path(out) / "scopeyourskills.artifact.html").read_text(encoding="utf-8")
         self.assertIn("function render()", art)          # app code survived the skeleton strip
         self.assertNotIn("<!doctype", art.lower())
 

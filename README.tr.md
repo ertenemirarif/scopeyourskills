@@ -35,7 +35,7 @@ Taranan yerler: Claude Code, Claude Desktop plugin'leri, Codex, Gemini/Antigravi
 Repo, kişisel skill klasörüne klonlanır:
 
 ```bash
-git clone https://github.com/ertenemirarif/scope-your-skills.git ~/.claude/skills/scope-your-skills
+git clone https://github.com/ertenemirarif/scopeyourskills.git ~/.claude/skills/scopeyourskills
 ```
 
 Ardından Claude'a *"skill envanterimi çıkar"* ya da *"scope your skills"* demek yeterlidir. Claude şunları kendisi yapar:
@@ -51,8 +51,8 @@ Başka bir dil istendiğinde ("Almancasını da ekle" gibi), o dil de ayrıca ha
 Yalnızca Python 3.9 veya üstü gerekir; ek paket kurulmaz.
 
 ```bash
-git clone https://github.com/ertenemirarif/scope-your-skills.git
-cd scope-your-skills
+git clone https://github.com/ertenemirarif/scopeyourskills.git
+cd scopeyourskills
 python scopeyourskills.py --open
 ```
 
@@ -75,7 +75,7 @@ python scopeyourskills.py --path "İndirilenler=D:/repolar" --github --open
 | `--categories DOSYA` | Kendi tema kuralları |
 | `--out KLASÖR` | Çıktı klasörü (varsayılan `output/`) |
 
-Çıktı: `output/scope-your-skills.html` ve `output/skills.json`.
+Çıktı: `output/scopeyourskills.html` ve `output/skills.json`.
 
 ## Çeviriler
 

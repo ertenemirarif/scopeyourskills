@@ -38,7 +38,7 @@ Scope Your Skills scans every `SKILL.md` on your machine (Claude Code, Claude De
 Clone the repo into your personal skills folder and ask Claude for it:
 
 ```bash
-git clone https://github.com/ertenemirarif/scope-your-skills.git ~/.claude/skills/scope-your-skills
+git clone https://github.com/ertenemirarif/scopeyourskills.git ~/.claude/skills/scopeyourskills
 ```
 
 Then say *"scope your skills"* (or *"skill envanterimi çıkar"*). Claude scans, translates the missing descriptions into English, Turkish, Chinese and Spanish itself (no API key), builds the dashboard and opens it. Ask for another language ("also in German") and it adds that too. The steps are in [SKILL.md](SKILL.md).
@@ -48,8 +48,8 @@ Then say *"scope your skills"* (or *"skill envanterimi çıkar"*). Claude scans,
 Python 3.9+ only, no packages to install. On Windows, use `py -3` wherever this README says `python`.
 
 ```bash
-git clone https://github.com/ertenemirarif/scope-your-skills.git
-cd scope-your-skills
+git clone https://github.com/ertenemirarif/scopeyourskills.git
+cd scopeyourskills
 python scopeyourskills.py --open
 ```
 
@@ -73,11 +73,11 @@ python scopeyourskills.py --path "Downloaded=~/Downloads/skill-repos" --open
 | `--categories FILE` | Your own theme rules |
 | `--out DIR` | Output folder (default `output/`) |
 
-Output: `output/scope-your-skills.html` and `output/skills.json`.
+Output: `output/scopeyourskills.html` and `output/skills.json`.
 
 ## Claude artifact and weekly refresh
 
-- Every build also writes `output/scope-your-skills.artifact.html`. You can publish it as a private claude.ai artifact; the skill offers to do this for you.
+- Every build also writes `output/scopeyourskills.artifact.html`. You can publish it as a private claude.ai artifact; the skill offers to do this for you.
 - **Weekly refresh, two options:**
   - Ask the skill to set up a weekly Claude scheduled task. It re-scans, translates new skills and republishes the artifact.
   - Without Claude, add `--schedule weekly` to your usual command. This registers a Windows Task Scheduler job or prints a cron line, and only rebuilds the HTML. Remove it with `--schedule off`.
