@@ -99,7 +99,7 @@ Açıklaması zaten seçili dilde olan skill'ler olduğu gibi gösterilir. Diğe
 
 ## Gizlilik
 
-Tüm işlem yerelde yapılır. `--github` kullanıldığında GitHub'a yalnızca herkese açık repo adları gönderilir. Oluşan dashboard dosyası, bilgisayardaki dosya yollarını ve skill listesini içerir. Bu yüzden paylaşılmadan önce gözden geçirilmesi önerilir. `output/`, `translations/` ve `cache/` klasörleri git dışında tutulur.
+Tarama yerelde yapılır. Veri yalnızca sen istediğinde dışarı çıkar: `--github`, taranan skill'lerin bağlı olduğu GitHub repolarının sahip/ad bilgisini (özel olanlar dahil) api.github.com'a gönderir; çeviri (skill üzerinden Claude ile ya da `--translate` ile Claude API'si) skill açıklamalarını Claude'a gönderir. Oluşan dashboard dosyası, bilgisayardaki dosya yollarını ve skill listesini içerir. Bu yüzden paylaşılmadan önce gözden geçirilmesi önerilir. `output/`, `translations/` ve `cache/` klasörleri git dışında tutulur.
 
 ## Testler
 

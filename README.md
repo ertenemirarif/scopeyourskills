@@ -11,7 +11,7 @@ SkillScope scans every `SKILL.md` on your machine (Claude Code, Claude Desktop p
 ## What you get
 
 - **Explore:** totals (unique, installed, downloaded only) and install status by theme. The *live overlaps* tile jumps straight to the overlaps page.
-- **Skill catalog:** skills grouped by category, then by package. Each package header shows its name, author, short description and GitHub link. Rows of one category share a band colour, and the band alternates when the next category starts.
+- **Skill catalog:** skills grouped by category, then by package. Each package header shows its name, author, short description and GitHub link. Each package (its header and its skills) shares one band colour and a light or dark shade of the category colour, so you see where one skill set ends and the next begins.
 - **Readable names:** `bio-research:instrument-data-to-allotrope` shows as *Instrument Data to Allotrope*; the technical id stays in the detail panel.
 - **Status and actions:** every row is tagged *Installed*, *Installed elsewhere* or *Not installed*. *Open* shows details (paths, similar skills); *Install* copies a ready-made command that copies the skill into `~/.claude/skills` (the page itself never touches your files).
 - **Stars and licenses:** with `--github`, each package shows its GitHub stars and license (MIT in green; non-commercial, proprietary and unknown licenses highlighted). Licenses are read from the package's own `LICENSE` file first; a `*` marks a mismatch with GitHub.
@@ -93,7 +93,7 @@ Known limits: keyword themes are a heuristic, so a few skills land in *Other* or
 
 ## Privacy
 
-Everything runs locally. The dashboard contains your local paths and skill descriptions, so look it over before sharing it. `output/` is git-ignored.
+Scanning runs locally. Data leaves your machine only when you ask for it: `--github` sends the owner/name of linked GitHub repos to api.github.com, and translation (by Claude through the skill, or `--translate` with the Claude API) sends skill descriptions to Claude. The dashboard contains your local paths and skill descriptions, so look it over before sharing it. `output/`, `translations/` and `cache/` are git-ignored.
 
 ## Tests
 

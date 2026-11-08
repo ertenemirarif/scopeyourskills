@@ -5,3 +5,8 @@ __pycache__/
 translations/
 assets/logo-full.gif
 cache/
+ORKESTRA.md
+todo/
+missing-*.json
+.env
+.env.*

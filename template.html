@@ -132,7 +132,7 @@ h2{font-size:20px;margin:0 0 4px}
 .flags button:hover{box-shadow:0 0 0 1px var(--accent)}
 .flags button[aria-pressed="true"]{border-color:var(--accent);box-shadow:none}
 .flags svg{width:28px;height:19px;border-radius:3px;display:block}
-.flags .code{font-size:12px;font-weight:800}
+.flags .flag-code{font-size:12px;font-weight:800}
 .phead{display:flex;gap:12px;align-items:flex-start;padding:12px 18px;border-top:1px solid var(--line);border-left:4px solid var(--c);background:var(--panel)}
 .pav{width:32px;height:32px;flex:0 0 32px;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--ink);color:var(--panel)}
 .pbody{min-width:0;flex:1}
@@ -142,8 +142,10 @@ h2{font-size:20px;margin:0 0 4px}
 .plink:hover{background:var(--accent-soft)}
 .pdesc{color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .item{display:grid;grid-template-columns:auto minmax(0,1fr) 150px 150px auto;gap:16px;align-items:center;padding:14px 18px;border-top:1px solid var(--line);border-left:4px solid var(--c);cursor:pointer}
-.item.band-a{background:var(--panel)}
-.item.band-b{background:var(--band)}
+.item.band-a,.phead.band-a{background:var(--panel)}
+.item.band-b,.phead.band-b{background:var(--band)}
+.item.band-b,.phead.band-b{border-left-color:color-mix(in srgb,var(--c) 40%,var(--panel))}
+.phead.band-a+.item.band-a,.phead.band-b+.item.band-b{border-top-color:transparent}
 .item:hover{background:var(--soft)}
 .item .body{min-width:0}
 .item .nm{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -383,7 +385,8 @@ const fmt=(s,o)=>s.replace(/\{(\w+)\}/g,(_,k)=>o[k]);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const S=DATA.skills, CAT={}; DATA.categories.forEach((c,i)=>{CAT[c.id]=c;c.order=i;});
+const S=DATA.skills; S.forEach((s,i)=>s.id=i);
+const CAT={}; DATA.categories.forEach((c,i)=>{CAT[c.id]=c;c.order=i;});
 const catLabel=id=>CAT[id]?(CAT[id].label[LANG]||CAT[id].label.en):id;
 const byHash={}; S.forEach(s=>(byHash[s.hash]=byHash[s.hash]||[]).push(s));
 const repOf=s=>byHash[s.hash][0];
@@ -456,17 +459,17 @@ $("dedupeL").textContent=T.dedupe; const FLAGS={
 const FLAG_ORDER=["tr","en","zh","es"];
 $("uiLang").setAttribute("aria-label",T.uiLang);
 $("uiLang").innerHTML=[...FLAG_ORDER,...AVAIL_LANGS.filter(l=>!FLAG_ORDER.includes(l))].filter(l=>AVAIL_LANGS.includes(l))
-  .map(l=>`<button type="button" data-lang="${l}" aria-pressed="${l===LANG}" title="${esc(LANG_NAMES[l]||langName(l))}" aria-label="${esc(LANG_NAMES[l]||langName(l))}">${FLAGS[l]||`<span class="code">${esc(l.toUpperCase())}</span>`}</button>`).join("");
+  .map(l=>`<button type="button" data-lang="${l}" aria-pressed="${l===LANG}" title="${esc(LANG_NAMES[l]||langName(l))}" aria-label="${esc(LANG_NAMES[l]||langName(l))}">${FLAGS[l]||`<span class="flag-code">${esc(l.toUpperCase())}</span>`}</button>`).join("");
 $("uiLang").addEventListener("click",e=>{const b=e.target.closest("[data-lang]");if(!b||b.dataset.lang===LANG)return;store.set("ss-lang",b.dataset.lang);
   const u=new URL(location.href);if(u.searchParams.has("lang")){u.searchParams.delete("lang");location.replace(u.toString());}else location.reload();}); $("dlangL").textContent=T.dl; $("navCatH").textContent=T.cats;
 $("menuBtn").setAttribute("aria-label",T.menu); $("theme").setAttribute("aria-label",T.theme); $("dClose").setAttribute("aria-label",T.close);
 $("fPlat").innerHTML=`<option value="">${T.allPlat}</option>`+[...new Set(S.map(s=>s.source))].map(p=>`<option>${esc(p)}</option>`).join("");
 $("fStatus").innerHTML=[["",T.stAll],["yes",T.stYes],["no",T.stNo],["dup",T.stDup]].map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
-function filtered(){
+function filtered(keepCopies){
   const q=$("q").value.trim().toLocaleLowerCase(LANG), pl=$("fPlat").value, st=$("fStatus").value, dd=$("dedupe").checked;
   let r=S.filter(s=>(!pl||s.source===pl)&&(!st||(st==="yes"&&s.installed==="yes")||(st==="no"&&s.installed==="no")||(st==="dup"&&statusOf(s)==="part"))
-    &&(!q||(s.full+" "+s.title+" "+s.description+" "+(translated(s)||"")+" "+s.repo+" "+((DATA.packages||{})[s.pkg]||{}).title).toLocaleLowerCase(LANG).includes(q)));
-  if(dd){const seen=new Set();r=r.filter(s=>seen.has(s.hash)?false:(seen.add(s.hash),true));}
+    &&(!q||(s.full+" "+s.title+" "+s.description+" "+(translated(s)||"")+" "+s.repo+" "+(DATA.packages[s.pkg]||{}).title).toLocaleLowerCase(LANG).includes(q)));
+  if(dd&&!keepCopies){const seen=new Set();r=r.filter(s=>seen.has(s.hash)?false:(seen.add(s.hash),true));}
   return r;
 }
 function drawLang(){$("dlang").innerHTML=[["orig",T.dOrig],["tr",T.dTr]].map(([k,l])=>`<button type="button" data-m="${k}" aria-pressed="${descMode===k}">${l}</button>`).join("");}
@@ -478,7 +481,8 @@ let qTimer; $("q").addEventListener("input",()=>{clearTimeout(qTimer);qTimer=set
 let route={view:"explore",cat:null}, limit=60, otab="live", olimit=40;
 function go(view,cat=null){route={view,cat};limit=60;history.replaceState(null,"","#"+view+(cat?"-"+cat:""));closeSide();render();
   document.querySelector("main").scrollIntoView({block:"start"});}
-function readHash(){const [v,c]=decodeURIComponent(location.hash.slice(1)).split(/[-\/]/);
+function readHash(){let h;try{h=decodeURIComponent(location.hash.slice(1))}catch(e){h=""}
+  const i=h.search(/[-/]/), v=i<0?h:h.slice(0,i), c=i<0?"":h.slice(i+1);   // split route at the first dash (or old slash) only
   route={view:["explore","catalog","overlaps","repos"].includes(v)?v:"explore",cat:CAT[c]?c:null};}
 
 const liveCount=()=>DATA.overlaps.pairs.filter(p=>p.live.length&&!p.same_repo).length+DATA.overlaps.versions.filter(v=>v.live.length).length;
@@ -497,7 +501,7 @@ function render(){
   const V={explore:viewExplore,catalog:viewCatalog,overlaps:viewOverlaps,repos:viewRepos}[route.view];
   const [title,lead]={explore:[T.explore,T.exploreLead],catalog:[route.cat?catLabel(route.cat):T.catalog,T.catalogLead],overlaps:[T.overlaps,T.overlapsLead],repos:[T.repos,T.reposLead]}[route.view];
   $("title").textContent=title; $("lead").textContent=lead+"  ·  "+fmt(T.brandSub,{n:DATA.sources.length,d:DATA.generated});
-  $("view").innerHTML=V(rows);
+  $("view").innerHTML=V(route.view==="repos"?filtered(true):rows);
 }
 
 function viewExplore(rows){
@@ -525,7 +529,10 @@ function sortRows(rows,by){
   return rows.sort(nm);
 }
 let sortBy="cat";
-const PKG=DATA.packages||{};
+const PKG=DATA.packages;
+/* only http(s) links reach an href; "GitHub" is said only for github.com */
+function safeHref(u){try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:""}catch(e){return ""}}
+function linkLabel(u){try{const h=new URL(u).hostname;return h==="github.com"?"GitHub":h}catch(e){return ""}}
 const pkgOf=s=>PKG[s.pkg]||{title:s.repo,author:"",description:"",url:"",kind:"local"};
 function pkgDesc(p){
   if(!p.description)return "";
@@ -541,11 +548,11 @@ function licHTML(p,showNone){
   const note=p.gh_license&&p.gh_license!==l?fmt(T.licGh,{l:p.gh_license}):"";
   return `<span class="lic ${cls}" title="${esc(note||l)}">${esc(l)}${note?" *":""}</span>`;
 }
-function pkgHead(s,n){
+function pkgHead(s,n,band){
   const p=pkgOf(s), c=CAT[s.category].color, init=(p.title||"?").replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,"").slice(0,2).toUpperCase();
-  return `<div class="phead" style="--c:${c}"><span class="pav">${esc(init)}</span>
+  return `<div class="phead band-${band?"b":"a"}" style="--c:${c}"><span class="pav">${esc(init)}</span>
     <div class="pbody"><div class="ptitle"><b>${esc(p.title)}</b>${p.author?`<span class="muted small">${esc(p.author)}</span>`:""}${starsHTML(p)}${licHTML(p,p.kind!=="local")}<span class="count">${n}</span>
-      ${p.url?`<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(p.title)}: GitHub">${icon("ext")}</a>`:""}</div>
+      ${safeHref(p.url)?`<a class="plink" href="${esc(safeHref(p.url))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(p.title)}: ${esc(linkLabel(p.url))}">${icon("ext")}</a>`:""}</div>
       ${p.description?`<div class="pdesc">${pkgDesc(p)}</div>`:""}</div></div>`;
 }
 function viewCatalog(rows){
@@ -561,10 +568,10 @@ function viewCatalog(rows){
   const blk={}; rows.forEach(s=>{const k=(by==="cat"?s.category:"")+"|"+s.pkg;blk[k]=(blk[k]||0)+1;});
   let band=1,prevCat=null,prevPkg=null,html="";
   rows.slice(0,limit).forEach((s,i)=>{
-    if(by==="cat"&&s.category!==prevCat){band^=1;prevPkg=null;
+    if(by==="cat"&&s.category!==prevCat){band=1;prevPkg=null;
       html+=`<div class="ghead" style="--c:${CAT[s.category].color}"><span class="ic">${icon(s.category)}</span>${esc(catLabel(s.category))}</div>`;}
     const pk=(by==="cat"?s.category:"")+"|"+s.pkg;
-    if(by!=="name"&&pk!==prevPkg){if(by==="repo")band^=1;html+=pkgHead(s,blk[pk]);}
+    if(by!=="name"&&pk!==prevPkg){band^=1;html+=pkgHead(s,blk[pk],band);}
     if(by==="name")band=i%2;
     prevCat=s.category; prevPkg=pk;
     const st=statusOf(s), copies=byHash[s.hash].length;
@@ -605,13 +612,13 @@ function viewOverlaps(rows){
     ${items.length>olimit?`<div class="pager"><button type="button" class="btn ghost" id="oMore">${fmt(T.loadMore,{n:items.length-olimit})}</button></div>`:""}</section>`;
 }
 
-function viewRepos(){
+function viewRepos(rows){
   const pairBy={};DATA.overlaps.pairs.forEach(p=>[[p.a,p.b],[p.b,p.a]].forEach(([x,y])=>{if(isActive(y))(pairBy[x]=pairBy[x]||new Set()).add(y);}));
-  const R={};S.forEach(s=>{const k=s.pkg;(R[k]=R[k]||{repo:pkgOf(s).title,author:pkgOf(s).author,url:pkgOf(s).url,p:pkgOf(s),source:s.source,m:new Map()}).m.set(s.hash,s);});
-  const rows=Object.values(R).map(r=>{const l=[...r.m.values()],inst=l.filter(s=>s.installed!=="no").length,ov=l.filter(s=>s.installed==="no"&&pairBy[repOf(s).id]).length,c={};
+  const R={};rows.forEach(s=>{const k=s.pkg;(R[k]=R[k]||{repo:pkgOf(s).title,author:pkgOf(s).author,url:pkgOf(s).url,p:pkgOf(s),source:s.source,m:new Map()}).m.set(s.hash,s);});
+  const list=Object.values(R).map(r=>{const l=[...r.m.values()],inst=l.filter(s=>s.installed!=="no").length,ov=l.filter(s=>s.installed==="no"&&pairBy[repOf(s).id]).length,c={};
     l.forEach(s=>c[s.category]=(c[s.category]||0)+1);return {...r,n:l.length,inst,ov,nw:l.length-inst-ov,top:Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0],act:l[0].active};}).sort((a,b)=>a.act-b.act||((b.p.stars||-1)-(a.p.stars||-1))||b.n-a.n);
   return `<section class="panel tbl-wrap"><table><thead><tr><th>${T.rRepo}</th><th class="n">${T.rStars}</th><th>${T.rLic}</th><th>${T.rSrc}</th><th>${T.rTop}</th><th class="n">${T.rN}</th><th class="n">${T.rInst}</th><th class="n">${T.rOv}</th><th class="n">${T.rNew}</th></tr></thead><tbody>`+
-    rows.map(r=>`<tr><td><b>${esc(r.repo)}</b>${r.author?`<div class="muted small">${esc(r.author)}</div>`:""}</td><td class="n">${starsHTML(r.p)||"-"}</td><td>${licHTML(r.p,r.p.kind!=="local")||"-"}</td><td class="muted">${esc(r.source)}</td><td><span style="display:inline-flex;gap:8px;align-items:center;--c:${CAT[r.top].color}"><span class="ic" style="color:var(--c)">${icon(r.top)}</span>${esc(catLabel(r.top))}</span></td><td class="n">${r.n}</td><td class="n">${r.act?"-":r.inst}</td><td class="n">${r.act?"-":r.ov}</td><td class="n">${r.act?"-":`<b>${r.nw}</b>`}</td></tr>`).join("")+`</tbody></table></section>`;
+    (list.length?"":`<tr><td colspan="9" class="empty">${T.empty}</td></tr>`)+list.map(r=>`<tr><td><b>${esc(r.repo)}</b>${r.author?`<div class="muted small">${esc(r.author)}</div>`:""}</td><td class="n">${starsHTML(r.p)||"-"}</td><td>${licHTML(r.p,r.p.kind!=="local")||"-"}</td><td class="muted">${esc(r.source)}</td><td><span style="display:inline-flex;gap:8px;align-items:center;--c:${CAT[r.top].color}"><span class="ic" style="color:var(--c)">${icon(r.top)}</span>${esc(catLabel(r.top))}</span></td><td class="n">${r.n}</td><td class="n">${r.act?"-":r.inst}</td><td class="n">${r.act?"-":r.ov}</td><td class="n">${r.act?"-":`<b>${r.nw}</b>`}</td></tr>`).join("")+`</tbody></table></section>`;
 }
 
 /* ---------- interactions inside the view ---------- */
@@ -629,8 +636,13 @@ $("view").addEventListener("keydown",e=>{const it=e.target.closest(".item[data-i
 $("view").addEventListener("input",e=>{if(e.target.id==="sortBy"){sortBy=e.target.value;render();}});
 
 /* ---------- drawer ---------- */
-const installCmd=s=>{const name=s.path.split(/[\\/]/).pop();
-  return /^[A-Za-z]:\\/.test(s.path)?`Copy-Item -Recurse "${s.path}" "$HOME\\.claude\\skills\\${name}"`:`cp -r "${s.path}" ~/.claude/skills/${name}`;};
+/* literal quoting: a folder name can never become part of the command */
+const psq=v=>"'"+String(v).replace(/[‘’‚‛']/g,c=>c+c)+"'";
+const shq=v=>"'"+String(v).replace(/'/g,"'\\''")+"'";
+const installCmd=s=>{const name=s.path.split(/[\\/]/).filter(Boolean).pop()||"skill";
+  return DATA.os==="nt"
+    ?`$d=Join-Path $HOME '.claude\\skills'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item -LiteralPath ${psq(s.path)} -Destination (Join-Path $d ${psq(name)}) -Recurse`
+    :`mkdir -p ~/.claude/skills && cp -R ${shq(s.path)} ~/.claude/skills/${shq(name)}`;};
 let lastFocus=null;
 function openDrawer(id,from){
   const s=S[id], copies=byHash[s.hash], nb=(neighbours[repOf(s).id]||[]).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -639,7 +651,7 @@ function openDrawer(id,from){
     <section><p style="margin:0">${descHTML(s)}</p></section>
     <section><h4>${T.dCat}</h4><span style="display:inline-flex;gap:8px;align-items:center;color:${CAT[s.category].color}">${icon(s.category)}<b style="color:var(--ink)">${esc(catLabel(s.category))}</b></span>
       ${s.secondary.length?`<span class="muted small" style="margin-left:10px">${T.dAlso}: ${s.secondary.map(c=>esc(catLabel(c))).join(", ")}</span>`:""}</section>
-    <section><h4>${T.dSrc}</h4><b>${esc(pkgOf(s).title)}</b> ${starsHTML(pkgOf(s))} ${licHTML(pkgOf(s),pkgOf(s).kind!=="local")}${pkgOf(s).author?` <span class="muted">· ${esc(pkgOf(s).author)}</span>`:""}${pkgOf(s).url?` · <a href="${esc(pkgOf(s).url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">GitHub</a>`:""}<div class="muted small">${esc(s.source)}</div>${pkgOf(s).description?`<p class="muted small" style="margin:6px 0 0">${pkgDesc(pkgOf(s))}</p>`:""}</section>
+    <section><h4>${T.dSrc}</h4><b>${esc(pkgOf(s).title)}</b> ${starsHTML(pkgOf(s))} ${licHTML(pkgOf(s),pkgOf(s).kind!=="local")}${pkgOf(s).author?` <span class="muted">· ${esc(pkgOf(s).author)}</span>`:""}${safeHref(pkgOf(s).url)?` · <a href="${esc(safeHref(pkgOf(s).url))}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${esc(linkLabel(pkgOf(s).url))}</a>`:""}<div class="muted small">${esc(s.source)}</div>${pkgOf(s).description?`<p class="muted small" style="margin:6px 0 0">${pkgDesc(pkgOf(s))}</p>`:""}</section>
     <section><h4>${T.dPath}</h4>${copies.map(x=>`<div class="code" style="margin-bottom:6px"><code>${esc(x.path)}</code><button type="button" class="btn ghost" style="min-width:44px" data-copy="${esc(x.path)}" aria-label="${T.copy}">${icon("copy")}</button></div>`).join("")}</section>
     ${s.installed==="no"?`<section><h4>${T.dInst}</h4><div class="code"><code>${esc(installCmd(s))}</code><button type="button" class="btn primary" data-copy="${esc(installCmd(s))}">${icon("copy")}${T.copy}</button></div><p class="muted small">${T.dInstHelp}</p></section>`:""}
     <section class="sim-list"><h4>${T.dSim}</h4>${nb.length?nb.map(([nid,sim])=>`<button type="button" data-nid="${nid}">${tile(S[nid].category,true)}<span style="flex:1;min-width:0"><b>${esc(S[nid].title)}</b><br><span class="muted small">${esc(pkgOf(S[nid]).title)}</span></span><span class="chip">${Math.round(sim*100)}%</span></button>`).join(""):`<p class="muted">${T.none}</p>`}</section>`;
