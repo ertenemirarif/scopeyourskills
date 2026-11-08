@@ -199,7 +199,7 @@ def yaml_scalar(val: str) -> str:
             out.append(c)
             i += 1
         return val  # unterminated quote: keep as written
-    return re.split(r"\s+#", val, 1)[0].strip()
+    return re.split(r"\s+#", val, maxsplit=1)[0].strip()
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -221,7 +221,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
             i += 1
             continue
         key, raw = m.group(1), m.group(2).strip()
-        indicator = re.split(r"\s+#", raw, 1)[0].strip() if raw[:1] in ">|" or raw.startswith("#") else raw
+        indicator = re.split(r"\s+#", raw, maxsplit=1)[0].strip() if raw[:1] in ">|" or raw.startswith("#") else raw
         if indicator.startswith("#"):
             indicator = ""
         if indicator in (">", ">-", ">+", "|", "|-", "|+", ""):

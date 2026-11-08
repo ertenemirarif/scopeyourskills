@@ -37,7 +37,7 @@ Then say *"run skillscope"* (or *"skill envanterimi çıkar"*). Claude scans, tr
 
 ## Quick start (without Claude)
 
-Python 3.9+ only, no packages to install.
+Python 3.9+ only, no packages to install. On Windows, use `py -3` wherever this README says `python`.
 
 ```bash
 git clone https://github.com/<you>/skillscope.git
