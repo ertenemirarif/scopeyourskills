@@ -30,7 +30,7 @@ SkillScope scans every `SKILL.md` on your machine (Claude Code, Claude Desktop p
 Clone the repo into your personal skills folder and ask Claude for it:
 
 ```bash
-git clone https://github.com/<you>/skillscope.git ~/.claude/skills/skillscope
+git clone https://github.com/ertenemirarif/skillscope.git ~/.claude/skills/skillscope
 ```
 
 Then say *"run skillscope"* (or *"skill envanterimi çıkar"*). Claude scans, translates the missing descriptions into English, Turkish, Chinese and Spanish itself (no API key), builds the dashboard and opens it. Ask for another language ("also in German") and it adds that too. The steps are in [SKILL.md](SKILL.md).
@@ -40,7 +40,7 @@ Then say *"run skillscope"* (or *"skill envanterimi çıkar"*). Claude scans, tr
 Python 3.9+ only, no packages to install. On Windows, use `py -3` wherever this README says `python`.
 
 ```bash
-git clone https://github.com/<you>/skillscope.git
+git clone https://github.com/ertenemirarif/skillscope.git
 cd skillscope
 python skillscope.py --open
 ```
