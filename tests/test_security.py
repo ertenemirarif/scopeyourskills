@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import skillscope  # noqa: E402
+import scopeyourskills as skillscope  # noqa: E402
 
 
 def write(p: Path, text: str) -> Path:
@@ -55,11 +55,11 @@ class EmbeddingAndArtifact(unittest.TestCase):  # S11
         write(tmp / "a" / "skills" / "x" / "SKILL.md",
               "---\nname: x\ndescription: \"evil <!--<script> and text <html <body> </script>\"\n---\n")
         rc, out, _ = run_main("--path", f"R={tmp}")
-        html = (Path(out) / "skillscope.html").read_text(encoding="utf-8")
+        html = (Path(out) / "scope-your-skills.html").read_text(encoding="utf-8")
         start = html.index("const DATA = ") + len("const DATA = ")
         end = html.index(";\nconst LSTORE") if ";\nconst LSTORE" in html else html.index("\n", start)
         self.assertNotIn("<", html[start:end])
-        art = (Path(out) / "skillscope.artifact.html").read_text(encoding="utf-8")
+        art = (Path(out) / "scope-your-skills.artifact.html").read_text(encoding="utf-8")
         self.assertIn("function render()", art)          # app code survived the skeleton strip
         self.assertNotIn("<!doctype", art.lower())
 

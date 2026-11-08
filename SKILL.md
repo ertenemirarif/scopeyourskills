@@ -1,13 +1,13 @@
 ---
-name: skillscope
-description: Maps every agent skill (SKILL.md) on this machine into an offline dashboard - groups skills by theme and package, flags overlapping or duplicate skills, shows GitHub stars and licenses, and writes skill descriptions in English, Turkish, Chinese and Spanish (or any language the user asks for). Use when the user wants to see which skills they have, find conflicting or duplicate skills, audit downloaded skill repos, or says "skillscope", "skill envanteri", "skill haritası", "hangi skill'ler var", "çakışan skill'ler", "skill dashboard".
+name: scopeyourskills
+description: Maps every agent skill (SKILL.md) on this machine into an offline dashboard - groups skills by theme and package, flags overlapping or duplicate skills, shows GitHub stars and licenses, and writes skill descriptions in English, Turkish, Chinese and Spanish (or any language the user asks for). Use when the user wants to see which skills they have, find conflicting or duplicate skills, audit downloaded skill repos, or says "scope your skills", "scopeyourskills", "skillscope", "skill envanteri", "skill haritası", "hangi skill'ler var", "çakışan skill'ler", "skill dashboard".
 ---
 
-# SkillScope
+# Scope Your Skills
 
-Build the SkillScope dashboard for the user and fill in description translations yourself, so the user never needs an API key.
+Build the Scope Your Skills dashboard for the user and fill in description translations yourself, so the user never needs an API key.
 
-The tool is `skillscope.py`, in the same folder as this file (the skill's base directory). Below, `TOOL` means that full path and `WORK` means a fresh scratch folder (use your scratchpad if you have one). Run Python as `python`, `python3` or `py -3`, whichever exists. The tool needs only the standard library.
+The tool is `scopeyourskills.py`, in the same folder as this file (the skill's base directory). Below, `TOOL` means that full path and `WORK` means a fresh scratch folder (use your scratchpad if you have one). Run Python as `python`, `python3` or `py -3`, whichever exists. The tool needs only the standard library.
 
 ## 1. Settle the inputs (ask at most once)
 
@@ -47,13 +47,13 @@ python TOOL --merge <lang> WORK/out-<lang>-<n>.json
 
 ## 4. Build and open the dashboard
 
-Re-run the command from step 2, without `--export-missing` and with `--open`. The result is `output/skillscope.html` next to the tool: one offline file. Confirm that the `translations missing` line now shows 0 for each language. If it does not, repeat step 3 for the gaps.
+Re-run the command from step 2, without `--export-missing` and with `--open`. The result is `output/scope-your-skills.html` next to the tool: one offline file. Confirm that the `translations missing` line now shows 0 for each language. If it does not, repeat step 3 for the gaps.
 
 ## 5. Optional: publish as a Claude artifact
 
 If you have an Artifact publishing tool, offer to publish the dashboard as a private claude.ai artifact, and do it only if the user agrees.
 
-- The file to publish is `output/skillscope.artifact.html`. It is the same page without its own document skeleton.
+- The file to publish is `output/scope-your-skills.artifact.html`. It is the same page without its own document skeleton.
 - The artifact is private by default. Tell the user it contains their local paths and skill descriptions, so they should think before sharing it.
 - Save the artifact URL to `output/artifact-url.txt`.
 - On later runs, publish to that same URL so the link stays the same.
@@ -62,7 +62,7 @@ If you have an Artifact publishing tool, offer to publish the dashboard as a pri
 
 Ask whether the user wants the dashboard refreshed every week. If they say yes, set up one of these:
 
-- **Claude scheduled task (preferred, if you have a scheduled-task tool).** Create a weekly task whose prompt is: *"Run the skillscope skill with the same folders and languages as last time, translate any new descriptions, and republish the artifact at <URL> (or rebuild the HTML if there is no artifact)."* This path also translates new skills.
+- **Claude scheduled task (preferred, if you have a scheduled-task tool).** Create a weekly task whose prompt is: *"Run the scopeyourskills skill with the same folders and languages as last time, translate any new descriptions, and republish the artifact at <URL> (or rebuild the HTML if there is no artifact)."* This path also translates new skills.
 - **Operating-system task (no Claude needed).** Re-run the step 4 command with `--schedule weekly` added. Optionally add `--schedule-day SUN --schedule-time 21:00`.
   - On Windows this registers a Task Scheduler job.
   - On macOS and Linux it prints a cron line for the user to add.

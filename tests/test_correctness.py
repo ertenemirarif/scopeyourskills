@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import skillscope  # noqa: E402
+import scopeyourskills as skillscope  # noqa: E402
 
 
 def write(p: Path, text: str) -> Path:

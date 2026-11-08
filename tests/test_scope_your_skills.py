@@ -6,12 +6,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import skillscope  # noqa: E402
+import scopeyourskills as skillscope  # noqa: E402
 
 FIX = ROOT / "tests" / "fixtures"
 
 
-class SkillScopeTest(unittest.TestCase):
+class ScopeYourSkillsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
@@ -43,7 +43,7 @@ class SkillScopeTest(unittest.TestCase):
         self.assertEqual([v["name"] for v in self.data["overlaps"]["versions"]], ["pptx-maker"])
 
     def test_html_written(self):
-        html = (Path(self.tmp.name) / "skillscope.html").read_text(encoding="utf-8")
+        html = (Path(self.tmp.name) / "scope-your-skills.html").read_text(encoding="utf-8")
         self.assertNotIn("/*__DATA__*/null", html)
 
 

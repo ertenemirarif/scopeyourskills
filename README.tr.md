@@ -1,12 +1,14 @@
-<p align="center"><img src="assets/logo-320.gif" alt="SkillScope logosu" width="160"></p>
+<p align="center"><img src="assets/logo-320.gif" alt="Scope Your Skills logosu" width="160"></p>
 
-# SkillScope
+# Scope Your Skills
+
+*Bilgisayardaki tüm ajan skill'lerini görmek, düzenlemek ve tekrarlarından arındırmak için.*
 
 [English](README.md) · **Türkçe**
 
 **Elimde hangi skill'ler var, ne işe yarıyorlar ve hangileri birbirinin alanına giriyor?**
 
-Sosyal medyada önerilen skill repolarını indirmek kolay, ama bir süre sonra neyin kurulu olduğu, neyin işe yaradığı ve hangilerinin aynı işi yaptığı belirsizleşiyor. SkillScope bu karmaşayı düzenler. Bilgisayardaki tüm `SKILL.md` dosyalarını tarar ve skill'leri temaya ve pakete göre gruplar. Çakışan ve tekrar eden skill'leri işaretler. Sonucu internet gerektirmeyen tek bir HTML dashboard'da sunar.
+Sosyal medyada önerilen skill repolarını indirmek kolay, ama bir süre sonra neyin kurulu olduğu, neyin işe yaradığı ve hangilerinin aynı işi yaptığı belirsizleşiyor. Scope Your Skills bu karmaşayı düzenler. Bilgisayardaki tüm `SKILL.md` dosyalarını tarar ve skill'leri temaya ve pakete göre gruplar. Çakışan ve tekrar eden skill'leri işaretler. Sonucu internet gerektirmeyen tek bir HTML dashboard'da sunar.
 
 Taranan yerler: Claude Code, Claude Desktop plugin'leri, Codex, Gemini/Antigravity ve belirtilen indirme klasörleri.
 
@@ -33,10 +35,10 @@ Taranan yerler: Claude Code, Claude Desktop plugin'leri, Codex, Gemini/Antigravi
 Repo, kişisel skill klasörüne klonlanır:
 
 ```bash
-git clone https://github.com/<kullanıcı>/skillscope.git ~/.claude/skills/skillscope
+git clone https://github.com/ertenemirarif/scopeyourskills.git ~/.claude/skills/scopeyourskills
 ```
 
-Ardından Claude'a *"skill envanterimi çıkar"* ya da *"run skillscope"* demek yeterlidir. Claude şunları kendisi yapar:
+Ardından Claude'a *"skill envanterimi çıkar"* ya da *"scope your skills"* demek yeterlidir. Claude şunları kendisi yapar:
 
 1. Skill'leri tarar.
 2. Eksik açıklamaları Türkçe, İngilizce, Çince ve İspanyolcaya çevirir. Bunun için API anahtarı gerekmez.
@@ -49,15 +51,15 @@ Başka bir dil istendiğinde ("Almancasını da ekle" gibi), o dil de ayrıca ha
 Yalnızca Python 3.9 veya üstü gerekir; ek paket kurulmaz.
 
 ```bash
-git clone https://github.com/<kullanıcı>/skillscope.git
-cd skillscope
-python skillscope.py --open
+git clone https://github.com/ertenemirarif/scopeyourskills.git
+cd scopeyourskills
+python scopeyourskills.py --open
 ```
 
 İndirilmiş repoların bulunduğu klasörler ayrıca eklenebilir. Bu klasörlerdeki skill'ler *kurulu değil* olarak sayılır:
 
 ```bash
-python skillscope.py --path "İndirilenler=D:/repolar" --github --open
+python scopeyourskills.py --path "İndirilenler=D:/repolar" --github --open
 ```
 
 | Seçenek | Anlamı |
@@ -73,14 +75,14 @@ python skillscope.py --path "İndirilenler=D:/repolar" --github --open
 | `--categories DOSYA` | Kendi tema kuralları |
 | `--out KLASÖR` | Çıktı klasörü (varsayılan `output/`) |
 
-Çıktı: `output/skillscope.html` ve `output/skills.json`.
+Çıktı: `output/scope-your-skills.html` ve `output/skills.json`.
 
 ## Çeviriler
 
 Açıklaması zaten seçili dilde olan skill'ler olduğu gibi gösterilir. Diğerleri `translations/<dil>.json` önbelleğinden gelir. Bu önbellek üç yoldan doldurulabilir:
 
 1. **Claude skill'i:** Önerilen yoldur. Claude eksikleri kendisi çevirir ve önbelleğe ekler.
-2. **Claude API:** `ANTHROPIC_API_KEY=... python skillscope.py --translate` komutuyla eksikler çevrilip kaydedilir.
+2. **Claude API:** `ANTHROPIC_API_KEY=... python scopeyourskills.py --translate` komutuyla eksikler çevrilip kaydedilir.
 3. **Herhangi bir çevirmen:** `--export-missing` ile dışa aktarılan dosya çevrilir, `--merge` ile geri eklenir.
 
 Önbellekte karşılığı olmayan açıklamalar için, tarayıcıda yerleşik çeviri desteği varsa (güncel masaüstü Chrome) çeviri cihaz üzerinde yapılır. Hâlâ çevrilmemiş metinler orijinal hâliyle, "çevrilmedi" işaretiyle gösterilir.

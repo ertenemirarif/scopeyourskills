@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import skillscope  # noqa: E402
+import scopeyourskills as skillscope  # noqa: E402
 
 GOOD = """---
 name: slide-maker
@@ -92,7 +92,7 @@ class Audit(unittest.TestCase):
         self.assertIn("score", s["quality"])
         self.assertIn("flow", s["xray"])
         self.assertIn("missing_ref", s["lint"])
-        html = (Path(out) / "skillscope.html").read_text(encoding="utf-8")
+        html = (Path(out) / "scope-your-skills.html").read_text(encoding="utf-8")
         self.assertIn('"quality"', html)
         self.assertIn("function routeMatch(", html)   # in-browser routing simulator
 

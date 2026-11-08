@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""SkillScope: scan every agent skill (SKILL.md) on this machine, group the
+"""Scope Your Skills: scan every agent skill (SKILL.md) on this machine, group the
 skills by theme and find the ones that overlap.
 
 Standard library only. Usage:
 
-    python skillscope.py                         # auto-detect known locations
-    python skillscope.py --path "Repos=D:/repos" # add folders (label=path)
-    python skillscope.py --lang en --open        # English UI, open when done
+    python scopeyourskills.py                         # auto-detect known locations
+    python scopeyourskills.py --path "Repos=D:/repos" # add folders (label=path)
+    python scopeyourskills.py --lang en --open        # English UI, open when done
 
-Output: output/skillscope.html (single offline file), output/skillscope.artifact.html
+Output: output/scope-your-skills.html (single offline file), output/scope-your-skills.artifact.html
 (the same page for a claude.ai artifact) and output/skills.json.
 
 Everything read from SKILL.md, plugin.json, LICENSE or .git/config is treated as
@@ -367,7 +367,7 @@ def enrich_github(packages: dict, cache_file: Path, ttl_hours: float = 24) -> No
     token = github_token() if todo else None
     for sl in todo:
         req = urllib.request.Request(f"https://api.github.com/repos/{sl}",
-                                     headers={"Accept": "application/vnd.github+json", "User-Agent": "skillscope"})
+                                     headers={"Accept": "application/vnd.github+json", "User-Agent": "scope-your-skills"})
         if token:
             req.add_header("Authorization", f"Bearer {token}")
         try:
@@ -1010,7 +1010,7 @@ def merge_translations(lang: str, src: Path, folder: Path) -> int:
 # --------------------------------------------------------------------------- #
 # Weekly schedule
 # --------------------------------------------------------------------------- #
-TASK_NAME = "SkillScope weekly"
+TASK_NAME = "Scope Your Skills weekly"
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
 
@@ -1236,9 +1236,9 @@ def main(argv=None) -> int:
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     (out / "skills.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    page = out / "skillscope.html"
+    page = out / "scope-your-skills.html"
     page.write_text(render(data, args.lang), encoding="utf-8")
-    (out / "skillscope.artifact.html").write_text(render(data, args.lang, artifact=True), encoding="utf-8")
+    (out / "scope-your-skills.artifact.html").write_text(render(data, args.lang, artifact=True), encoding="utf-8")
 
     uniq = len({s["hash"] for s in skills})
     live = sum(1 for p in overlaps["pairs"] if p["live"] and not p["same_repo"])

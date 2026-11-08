@@ -1,10 +1,12 @@
-<p align="center"><img src="assets/logo-320.gif" alt="SkillScope logo" width="160"></p>
+<p align="center"><img src="assets/logo-320.gif" alt="Scope Your Skills logo" width="160"></p>
 
-# SkillScope
+# Scope Your Skills
+
+*See, sort and de-duplicate every agent skill on your machine.*
 
 **Which of my agent skills do I actually have, what are they for, and which ones step on each other?**
 
-SkillScope scans every `SKILL.md` on your machine (Claude Code, Claude Desktop plugins, Codex, Gemini/Antigravity, and any folder of downloaded repos), groups the skills by theme and finds overlaps. The result is one offline HTML dashboard.
+Scope Your Skills scans every `SKILL.md` on your machine (Claude Code, Claude Desktop plugins, Codex, Gemini/Antigravity, and any folder of downloaded repos), groups the skills by theme and finds overlaps. The result is one offline HTML dashboard.
 
 **English** · [Türkçe](README.tr.md)
 
@@ -36,25 +38,25 @@ SkillScope scans every `SKILL.md` on your machine (Claude Code, Claude Desktop p
 Clone the repo into your personal skills folder and ask Claude for it:
 
 ```bash
-git clone https://github.com/ertenemirarif/skillscope.git ~/.claude/skills/skillscope
+git clone https://github.com/ertenemirarif/scopeyourskills.git ~/.claude/skills/scopeyourskills
 ```
 
-Then say *"run skillscope"* (or *"skill envanterimi çıkar"*). Claude scans, translates the missing descriptions into English, Turkish, Chinese and Spanish itself (no API key), builds the dashboard and opens it. Ask for another language ("also in German") and it adds that too. The steps are in [SKILL.md](SKILL.md).
+Then say *"scope your skills"* (or *"skill envanterimi çıkar"*). Claude scans, translates the missing descriptions into English, Turkish, Chinese and Spanish itself (no API key), builds the dashboard and opens it. Ask for another language ("also in German") and it adds that too. The steps are in [SKILL.md](SKILL.md).
 
 ## Quick start (without Claude)
 
 Python 3.9+ only, no packages to install. On Windows, use `py -3` wherever this README says `python`.
 
 ```bash
-git clone https://github.com/ertenemirarif/skillscope.git
-cd skillscope
-python skillscope.py --open
+git clone https://github.com/ertenemirarif/scopeyourskills.git
+cd scopeyourskills
+python scopeyourskills.py --open
 ```
 
 Add folders of downloaded repos (these count as *not installed*):
 
 ```bash
-python skillscope.py --path "Downloaded=~/Downloads/skill-repos" --open
+python scopeyourskills.py --path "Downloaded=~/Downloads/skill-repos" --open
 ```
 
 | Option | Meaning |
@@ -71,11 +73,11 @@ python skillscope.py --path "Downloaded=~/Downloads/skill-repos" --open
 | `--categories FILE` | Your own theme rules |
 | `--out DIR` | Output folder (default `output/`) |
 
-Output: `output/skillscope.html` and `output/skills.json`.
+Output: `output/scope-your-skills.html` and `output/skills.json`.
 
 ## Claude artifact and weekly refresh
 
-- Every build also writes `output/skillscope.artifact.html`. You can publish it as a private claude.ai artifact; the skill offers to do this for you.
+- Every build also writes `output/scope-your-skills.artifact.html`. You can publish it as a private claude.ai artifact; the skill offers to do this for you.
 - **Weekly refresh, two options:**
   - Ask the skill to set up a weekly Claude scheduled task. It re-scans, translates new skills and republishes the artifact.
   - Without Claude, add `--schedule weekly` to your usual command. This registers a Windows Task Scheduler job or prints a cron line, and only rebuilds the HTML. Remove it with `--schedule off`.
@@ -84,8 +86,8 @@ Output: `output/skillscope.html` and `output/skills.json`.
 
 Descriptions already in your language are shown as they are. The others come from a cache, `translations/<lang>.json` (`{key: text}`), which you can fill in three ways:
 
-1. **Claude API:** `ANTHROPIC_API_KEY=... python skillscope.py --lang tr --translate` translates what is missing and caches it (model: `--model`, default `claude-haiku-5-5`).
-2. **Any translator (or Claude via the skill):** `python skillscope.py --export-missing todo/` writes `todo/missing-<lang>.json`; translate the values and run `python skillscope.py --merge <lang> file.json`.
+1. **Claude API:** `ANTHROPIC_API_KEY=... python scopeyourskills.py --lang tr --translate` translates what is missing and caches it (model: `--model`, default `claude-haiku-5-5`).
+2. **Any translator (or Claude via the skill):** `python scopeyourskills.py --export-missing todo/` writes `todo/missing-<lang>.json`; translate the values and run `python scopeyourskills.py --merge <lang> file.json`.
 3. **In the browser:** if nothing is cached and the browser has the built-in Translator API (recent desktop Chrome), the dashboard translates on the device and remembers the result.
 
 Anything still untranslated is shown in the original with a "not translated" mark.
