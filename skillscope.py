@@ -519,6 +519,162 @@ def tfidf(docs: list[list[str]]) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- #
+# X-ray and audit modes
+#   X-ray: a SKILL.md as a flow (trigger, steps, branches, tools, outputs, chains)
+#          plus a 0-100 quality score. Idea: silvesterdivas/skillscope.
+#   Audit: structural checks that cost no tokens. Idea: amd/skillscope (MIT).
+#   Both are implemented from scratch; no code was copied.
+# --------------------------------------------------------------------------- #
+MAX_FLOW = 24
+TOOL_RE = re.compile(r"\b(Bash|Read|Write|Edit|MultiEdit|Grep|Glob|WebFetch|WebSearch|Agent|Task|Skill|TodoWrite|"
+                     r"NotebookEdit|AskUserQuestion|Artifact|mcp__[A-Za-z0-9_-]+)\b")
+CMD_HINT_RE = re.compile(r"`(?:python3?|py|node|npx|npm|uv|bash|sh|git|gh|curl|ffmpeg|pip)\b")
+BRANCH_RE = re.compile(r"^(if|when|otherwise|else|unless|in case|eğer|aksi|değilse|yoksa|şayet)\b", re.I)
+OUTPUT_HEAD_RE = re.compile(r"output|result|deliver|report|çıktı|sonuç|rapor", re.I)
+EXAMPLE_RE = re.compile(r"(^#+\s*(examples?|örnek)|\bfor example\b|\be\.g\.|\börneğin\b|^input:|^output:)", re.I | re.M)
+TRIGGER_RE = re.compile(r"\buse (this|it|when|whenever|before|for|after)\b|\bmust use\b|when the user|trigger|invoke|activate|kullan|dediğinde|istediğinde", re.I)
+CHAIN_RE = re.compile(r"(?<![\w/])/[a-z][a-z0-9-]+(?::[a-z0-9-]+)?\b|\b[a-z0-9-]+:[a-z0-9-]+\b skill", re.I)
+REF_RE = re.compile(r"\]\(([^)\s#]+)\)|`((?:\./)?(?:scripts|references|assets|templates|examples|docs|resources)/[\w./-]+)`")
+NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+
+TOOL_NAMES = TOOL_RE.pattern[3:-3]
+
+
+def tool_mentions(line: str) -> set:
+    """Tool names used as tools: `Read`, 'Read tool', 'with/use/via Bash', mcp__x (not the verb 'write back')."""
+    found = set(re.findall(r"`(" + TOOL_NAMES + r")[`(]", line))
+    found |= set(re.findall(r"\b(" + TOOL_NAMES + r") tool\b", line))
+    found |= set(re.findall(r"\b(?:with|use|using|via|call|run) (?:the )?(" + TOOL_NAMES + r")\b", line))
+    found |= set(re.findall(r"\b(mcp__[A-Za-z0-9_-]+)", line))
+    return found
+
+
+def clip(text: str, n: int = 90) -> str:
+    text = re.sub(r"\s+", " ", re.sub(r"[`*_>#]|\[([^\]]*)\]\([^)]*\)", r"\1", text)).strip()
+    return text if len(text) <= n else text[:n - 1] + "…"
+
+
+def xray(meta: dict, body: str) -> dict:
+    """The skill as a flow of typed nodes: trigger, section, step, branch, tool, output, chain."""
+    flow = [{"k": "trigger", "t": clip(meta.get("description") or meta.get("name") or "")}]
+    tools, steps, sections, in_code, out_section = set(), 0, 0, False, False
+    for line in body.splitlines():
+        st = line.strip()
+        if st.startswith("```"):
+            in_code = not in_code
+            continue
+        if not st:
+            continue
+        found = tool_mentions(st)
+        if in_code:
+            if CMD_HINT_RE.search("`" + st) or re.match(r"^(python3?|py|node|npx|npm|uv|git|gh|curl|ffmpeg)\b", st):
+                found.add("Bash")
+            tools |= found
+            continue
+        if CMD_HINT_RE.search(st):
+            found.add("Bash")
+        tools |= found
+        head = re.match(r"^(#{2,3})\s+(.*)", st)
+        if head:
+            sections += 1
+            out_section = bool(OUTPUT_HEAD_RE.search(head.group(2)))
+            flow.append({"k": "section", "t": clip(head.group(2), 60)})
+            continue
+        item = re.match(r"^(\d+[.)]|[-*])\s+(.*)", st)
+        text = item.group(2) if item else st
+        if item:
+            steps += 1
+        if not item and not out_section:
+            continue  # plain prose is context, not a step
+        if BRANCH_RE.match(text):
+            kind = "branch"
+        elif out_section:
+            kind = "output"
+        elif found:
+            kind = "tool"
+        elif CHAIN_RE.search(text):
+            kind = "chain"
+        else:
+            kind = "step"
+        node = {"k": kind, "t": clip(text)}
+        if found:
+            node["tools"] = sorted(found)[:4]
+        flow.append(node)
+    if len(flow) > MAX_FLOW:  # keep the start and the end, mark the cut
+        flow = flow[:MAX_FLOW - 3] + [{"k": "more", "t": str(len(flow) - MAX_FLOW + 2)}] + flow[-2:]
+    return {"flow": flow, "steps": steps, "sections": sections, "tools": sorted(tools)}
+
+
+def lint(f: Path, meta: dict, body: str) -> list[str]:
+    """Structural problems that cost no tokens to find (codes are translated in the page)."""
+    issues = []
+    if not meta:
+        return ["frontmatter_missing"]
+    name = meta.get("name", "")
+    if not name:
+        issues.append("name_missing")
+    else:
+        if name != f.parent.name:
+            issues.append("name_mismatch")
+        if not NAME_RE.match(name) or len(name) > 64:
+            issues.append("name_format")
+    desc = meta.get("description", "")
+    if not desc:
+        issues.append("desc_missing")
+    elif len(desc) > 1024:
+        issues.append("desc_too_long")
+    if len(body.splitlines()) > 500:
+        issues.append("body_too_long")
+    for m in REF_RE.finditer(body):
+        ref = (m.group(1) or m.group(2) or "").split("#")[0]
+        if not ref or re.match(r"^[a-z]+:", ref, re.I) or ref.startswith(("/", "~", "<", "{")) or "{" in ref:
+            continue
+        target = f.parent / ref
+        if not inside(target, f.parent.parent) or not target.exists():
+            issues.append("missing_ref")
+            break
+    return issues
+
+
+def quality(meta: dict, body: str, folder: str, issues: list[str]) -> dict:
+    """0-100 score from five 20-point parts, with fix codes for what is missing."""
+    desc = meta.get("description", "")
+    words = len(re.findall(r"\w+", body))
+    lines = len(body.splitlines())
+    heads = len(re.findall(r"^#{2,3}\s", body, re.M))
+    steps = len(re.findall(r"^\s*(\d+[.)]|[-*])\s+", body, re.M))
+    fixes, parts = [], {}
+    t = 0
+    if desc:
+        t += 8
+        t += 4 if 40 <= len(desc) <= 1024 else 0
+        if not 40 <= len(desc) <= 1024:
+            fixes.append("desc_length")
+        if TRIGGER_RE.search(desc):
+            t += 8
+        else:
+            fixes.append("no_trigger_phrase")
+    else:
+        fixes += ["desc_missing", "no_trigger_phrase"]
+    parts["trigger"] = t
+    t = (8 if heads >= 2 else 0) + (8 if steps >= 3 else 0) + (4 if meta.get("name") else 0)
+    fixes += (["few_sections"] if heads < 2 else []) + (["no_steps"] if steps < 3 else [])
+    parts["structure"] = t
+    t = (10 if lines <= 500 else 0) + (5 if words >= 30 else 0) + (5 if len(desc) <= 1024 else 0)
+    fixes += (["too_long"] if lines > 500 else []) + (["too_short"] if words < 30 else [])
+    parts["size"] = t
+    has_ex = bool(EXAMPLE_RE.search(body))
+    has_out = bool(re.search(r"^#+\s*.*(" + OUTPUT_HEAD_RE.pattern + ")", body, re.M | re.I))
+    parts["examples"] = (10 if has_ex else 0) + (10 if has_out else 0)
+    fixes += (["no_examples"] if not has_ex else []) + (["no_output"] if not has_out else [])
+    parts["resources"] = (10 if "missing_ref" not in issues else 0) + \
+        (10 if not {"name_mismatch", "name_format", "name_missing"} & set(issues) else 0)
+    fixes += [i for i in issues if i in ("missing_ref", "name_mismatch", "name_format", "name_missing")]
+    return {"score": sum(parts.values()), "parts": parts, "fixes": list(dict.fromkeys(fixes))}
+
+
+# --------------------------------------------------------------------------- #
 # Main pipeline
 # --------------------------------------------------------------------------- #
 def scan(sources: list[dict], cats: list[dict]) -> tuple[list[dict], dict]:
@@ -552,6 +708,7 @@ def scan(sources: list[dict], cats: list[dict]) -> tuple[list[dict], dict]:
             pkg, info = package_info(f, root, src, plugin, man)
             packages.setdefault(pkg, info)
             primary, secondary, scores = categorize(name, desc, cats)
+            issues = lint(f, meta, body)
             by_real[real] = len(skills)
             skills.append({
                 "id": len(skills),
@@ -571,6 +728,9 @@ def scan(sources: list[dict], cats: list[dict]) -> tuple[list[dict], dict]:
                 "secondary": secondary,
                 "scores": scores,
                 "hash": hashlib.sha1(data).hexdigest()[:12],  # exact bytes: whitespace matters
+                "lint": issues,
+                "quality": quality(meta, body, f.parent.name, issues),
+                "xray": xray(meta, body),
             })
     return skills, packages
 
@@ -629,6 +789,117 @@ def find_overlaps(skills: list[dict], threshold: float, sibling_extra: float = 0
                           "live": live, "same_repo": same_pkg})
     pairs.sort(key=lambda p: (-bool(p["live"]), p["same_repo"], -p["sim"]))
     return {"copies": copies, "versions": versions, "pairs": pairs}
+
+
+# --------------------------------------------------------------------------- #
+# Usage: which installed skills actually fire (Claude Code transcripts, opt-in)
+# --------------------------------------------------------------------------- #
+CMD_RE = re.compile(r"<command-name>/?([^<\s]+)</command-name>")
+
+
+def scan_usage(folder: Path) -> dict:
+    """Count Skill tool calls and slash commands per skill name in Claude Code transcripts.
+
+    Only the skill name, the date, the session id and token counts are read from each
+    matching line; no conversation text is kept. Built-in commands are filtered later by
+    matching against installed skills. Measured tokens come from Claude Code's own
+    `attributionSkill` stamp on answers (approach from notsointresting/skillscope, MIT).
+    """
+    calls: dict = {}
+    tokens: dict = defaultdict(int)
+    seen_ids, seen_msgs, files, sessions, first, last = set(), set(), 0, 0, None, None
+    for f in sorted(Path(folder).rglob("*.jsonl")) if Path(folder).is_dir() else []:
+        if f.is_symlink():
+            continue
+        files += 1
+        if "subagents" not in f.parts:
+            sessions += 1
+        try:
+            fh = open(f, encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        with fh:
+            for raw in fh:
+                if '"Skill"' not in raw and "<command-name>" not in raw and '"attributionSkill"' not in raw:
+                    continue
+                try:
+                    rec = json.loads(raw)
+                except (ValueError, RecursionError):
+                    continue
+                if not isinstance(rec, dict) or rec.get("type") not in ("assistant", "user"):
+                    continue
+                msg = rec.get("message") if isinstance(rec.get("message"), dict) else {}
+                ts = str_field(rec.get("timestamp"))[:10]
+                owner = str_field(rec.get("attributionSkill"))
+                if owner and rec.get("type") == "assistant" and isinstance(msg.get("usage"), dict):
+                    mid = str_field(msg.get("id")) or str_field(rec.get("uuid"))
+                    if mid not in seen_msgs:  # one answer is logged once per content block
+                        seen_msgs.add(mid)
+                        u = msg["usage"]
+                        num = lambda k: u.get(k) if isinstance(u.get(k), int) else 0
+                        # cache reads are near-free and left out, as in notsointresting/skillscope
+                        tokens[owner] += num("input_tokens") + num("output_tokens") + num("cache_creation_input_tokens")
+                session = str_field(rec.get("sessionId")) or f.stem
+                names = []
+                content = msg.get("content")
+                if isinstance(content, list):
+                    for c in content:
+                        if isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name") == "Skill":
+                            cid = str_field(c.get("id"))
+                            if cid and cid in seen_ids:
+                                continue  # the same call logged twice
+                            seen_ids.add(cid)
+                            skill = str_field((c.get("input") or {}).get("skill") if isinstance(c.get("input"), dict) else "")
+                            if skill:
+                                names.append(skill)
+                elif isinstance(content, str) and rec.get("type") == "user":
+                    names += CMD_RE.findall(content[:2000])
+                for name in names:
+                    e = calls.setdefault(name, {"fires": 0, "sessions": set(), "last": ""})
+                    e["fires"] += 1
+                    e["sessions"].add(session)
+                    if ts > e["last"]:
+                        e["last"] = ts
+                    if ts:
+                        first = ts if first is None or ts < first else first
+                        last = ts if last is None or ts > last else last
+    for e in calls.values():
+        e["sessions"] = len(e["sessions"])
+    return {"calls": calls, "tokens": dict(tokens), "files": files, "sessions": sessions,
+            "first": first or "", "last": last or ""}
+
+
+def attach_usage(skills: list[dict], usage: dict) -> dict:
+    """Give every installed skill its usage; return the dashboard summary."""
+    calls, tokens = usage["calls"], usage.get("tokens", {})
+    by_plain = defaultdict(list)  # 'design-critique' -> calls named 'design:design-critique' too
+    for name, e in calls.items():
+        by_plain[name.split(":")[-1].lower()].append(e)
+    for s in skills:
+        if not s["active"]:
+            continue
+        hit = calls.get(s["full"]) or (calls.get(s["name"]) if not s.get("plugin") else None)
+        if hit is None and not s.get("plugin") and len(by_plain.get(s["name"].lower(), [])) == 1:
+            hit = by_plain[s["name"].lower()][0]
+        s["usage"] = {"fires": hit["fires"], "sessions": hit["sessions"], "last": hit["last"]} if hit else \
+            {"fires": 0, "sessions": 0, "last": ""}
+        s["usage"]["tokens"] = tokens.get(s["full"]) or (tokens.get(s["name"], 0) if not s.get("plugin") else 0)
+        # estimate: the name and description sit in the system prompt of every session (chars / 4)
+        s["usage"]["overhead"] = round((len(s["description"]) + len(s["name"])) / 4)
+    installed = {}
+    for s in skills:  # one entry per installed skill name, best usage wins
+        if s["active"]:
+            k = s["full"].lower()
+            if k not in installed or s["usage"]["fires"] > installed[k]["fires"]:
+                installed[k] = s["usage"]
+    used = sum(1 for u in installed.values() if u["fires"])
+    return {"files": usage["files"], "sessions": usage.get("sessions", 0),
+            "first": usage["first"], "last": usage["last"],
+            "installed": len(installed), "used": used, "never": len(installed) - used,
+            "fires": sum(u["fires"] for u in installed.values()),
+            "tokens": sum(u["tokens"] for u in installed.values()),
+            "idle_overhead": sum(u["overhead"] for u in installed.values() if not u["fires"])}
+
 
 
 def mark_installed(skills: list[dict]) -> None:
@@ -773,6 +1044,10 @@ def build_parser() -> argparse.ArgumentParser:
                          "that re-runs this same command, or remove it")
     ap.add_argument("--schedule-day", default="SUN", help="day for --schedule weekly (MON..SUN)")
     ap.add_argument("--schedule-time", default="21:00", help="time for --schedule weekly (HH:MM, 24h)")
+    ap.add_argument("--usage", action="store_true",
+                    help="count how often each installed skill fired, from local Claude Code transcripts (read-only)")
+    ap.add_argument("--usage-dir", default=str(HOME / ".claude" / "projects"),
+                    help="folder with Claude Code transcripts for --usage")
     ap.add_argument("--export-missing", metavar="DIR",
                     help="write untranslated descriptions to DIR/missing-<lang>.json ({key: text}) for any translator")
     return ap
@@ -844,13 +1119,20 @@ def setup_schedule(mode: str, argv: list[str], day: str, time_: str) -> int:
 # --------------------------------------------------------------------------- #
 SKELETON_RE = re.compile(r'(?is)<!doctype[^>]*>|</?html[^>]*>|</?head>|</?body>|<meta charset[^>]*>|<meta name="viewport"[^>]*>')
 WEB_SKILL_KEYS = ("full", "title", "pkg", "description", "path", "source", "repo", "active", "category",
-                  "secondary", "hash", "installed", "desc_key", "desc_lang")
+                  "secondary", "hash", "installed", "desc_key", "desc_lang", "lint", "quality")
 
 
 def web_data(data: dict) -> dict:
     """What the page needs: drops internal fields and local source paths to keep the HTML small."""
     web = dict(data)
-    web["skills"] = [{k: s[k] for k in WEB_SKILL_KEYS} for s in data["skills"]]
+    first_of = {}
+    for s in data["skills"]:
+        first_of.setdefault(s["hash"], s["id"])
+    # the flow is identical for copies, so only the first copy carries it
+    web["skills"] = [{**{k: s[k] for k in WEB_SKILL_KEYS},
+                      **({"usage": s["usage"]} if "usage" in s else {}),
+                      **({"xray": s["xray"]} if first_of[s["hash"]] == s["id"] else {})}
+                     for s in data["skills"]]
     web["sources"] = [{"label": s["label"]} for s in data["sources"]]
     web["os"] = "nt" if os.name == "nt" else "posix"
     return web
@@ -903,6 +1185,7 @@ def main(argv=None) -> int:
         enrich_github(packages, HERE / "cache" / "github.json")
     mark_installed(skills)
     overlaps = find_overlaps(skills, args.threshold)
+    usage_summary = attach_usage(skills, scan_usage(Path(args.usage_dir))) if args.usage else None
 
     # descriptions in every dashboard language (cache: translations/<lang>.json)
     for x in list(skills) + list(packages.values()):
@@ -948,6 +1231,7 @@ def main(argv=None) -> int:
         "packages": packages,
         "skills": skills,
         "overlaps": overlaps,
+        "usage": usage_summary,
     }
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)

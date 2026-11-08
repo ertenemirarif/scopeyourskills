@@ -25,6 +25,12 @@ SkillScope scans every `SKILL.md` on your machine (Claude Code, Claude Desktop p
   - *Same name, different version:* which one loads may be unclear.
   - *Exact copies:* byte-identical files in several places.
 
+## Modes
+
+- **Usage** (`--usage`): which installed skills actually fire, how often, in how many sessions, when last, and how many tokens Claude Code attributes to them. Never-used skills are listed with an estimate of the context they still take up in every session (description length / 4, an upper bound). Read from the local Claude Code transcripts; only skill names, dates, session ids and token counts are read.
+- **X-ray:** each skill as a flow (trigger, sections, steps, decisions, tools, outputs, links to other skills) with a 0-100 quality score in five parts and concrete fixes.
+- **Audit:** structural checks that cost no tokens (front matter, name matches folder, name format, description length, body over 500 lines, files named in the body but missing) and a **routing simulator**: type a request and see which skills' descriptions match it, with a warning when two are close.
+
 ## Use it as a Claude skill (recommended)
 
 Clone the repo into your personal skills folder and ask Claude for it:
@@ -59,6 +65,7 @@ python skillscope.py --path "Downloaded=~/Downloads/skill-repos" --open
 | `--threshold 0.25` | Similarity cut-off for overlaps (0-1). Higher means fewer, stronger matches |
 | `--lang en` | Default dashboard language (default: `tr`) |
 | `--langs tr,en,zh,es` | Languages to prepare description translations for |
+| `--usage` | Count how often each installed skill fired, from local Claude Code transcripts (read-only) |
 | `--github` | Fetch stars and licenses from GitHub (uses `GITHUB_TOKEN` or your `gh` login, cached 24 h) |
 | `--export-missing DIR` / `--merge LANG FILE` | Export untranslated descriptions per language, merge translated files back |
 | `--categories FILE` | Your own theme rules |
@@ -93,13 +100,21 @@ Known limits: keyword themes are a heuristic, so a few skills land in *Other* or
 
 ## Privacy
 
-Scanning runs locally. Data leaves your machine only when you ask for it: `--github` sends the owner/name of linked GitHub repos to api.github.com, and translation (by Claude through the skill, or `--translate` with the Claude API) sends skill descriptions to Claude. The dashboard contains your local paths and skill descriptions, so look it over before sharing it. `output/`, `translations/` and `cache/` are git-ignored.
+Scanning runs locally. `--usage` reads your Claude Code transcripts locally and keeps only skill names, dates and token counts. Data leaves your machine only when you ask for it: `--github` sends the owner/name of linked GitHub repos to api.github.com, and translation (by Claude through the skill, or `--translate` with the Claude API) sends skill descriptions to Claude. The dashboard contains your local paths and skill descriptions, so look it over before sharing it. `output/`, `translations/` and `cache/` are git-ignored.
 
 ## Tests
 
 ```bash
 python -m unittest discover -s tests
 ```
+
+## Acknowledgements
+
+Three projects that share the name SkillScope inspired the modes; their code was not copied:
+
+- [notsointresting/skillscope](https://github.com/notsointresting/skillscope) (MIT): reading Claude Code transcripts to find which skills fire, token attribution through `attributionSkill`, and the idle-overhead estimate.
+- [silvesterdivas/skillscope](https://github.com/silvesterdivas/skillscope): a SKILL.md as a flowchart with a quality score.
+- [amd/skillscope](https://github.com/amd/skillscope) (MIT): structural and routing tests for skills.
 
 ## License
 

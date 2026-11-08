@@ -68,7 +68,7 @@ h2{font-size:20px;margin:0 0 4px}
 
 /* cards */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
 .stat{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;cursor:pointer;min-height:44px}
 .stat:hover{border-color:var(--accent)}
 .stat b{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -133,6 +133,26 @@ h2{font-size:20px;margin:0 0 4px}
 .flags button[aria-pressed="true"]{border-color:var(--accent);box-shadow:none}
 .flags svg{width:28px;height:19px;border-radius:3px;display:block}
 .flags .flag-code{font-size:12px;font-weight:800}
+.score{display:inline-flex;align-items:center;gap:8px;min-width:120px}
+.score b{font-size:16px;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+.sbar{flex:1;height:8px;background:var(--soft);border-radius:5px;overflow:hidden;min-width:60px}
+.sbar i{display:block;height:100%;background:var(--accent)}
+.parts{display:grid;gap:6px;margin-top:10px}
+.part{display:grid;grid-template-columns:140px 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.part b{text-align:right;font-variant-numeric:tabular-nums}
+.fixes{margin:6px 0 0;padding-left:18px;color:var(--ink)}
+.fixes li{margin:3px 0}
+.flow{list-style:none;margin:8px 0 0;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.fnode{position:relative;padding:5px 0 5px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.fnode::before{content:"";position:absolute;left:-21px;top:11px;width:12px;height:12px;border-radius:50%;background:var(--kc,var(--muted));border:2px solid var(--panel)}
+.fk{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--kc,var(--muted));min-width:70px}
+.ft{flex:1;min-width:0}
+.k-trigger{--kc:#0891b2}.k-section{--kc:var(--ink)}.k-step{--kc:#64748b}.k-branch{--kc:#d97706}.k-tool{--kc:#16a34a}.k-output{--kc:#e11d48}.k-chain{--kc:#7c3aed}.k-more{--kc:var(--muted)}
+.k-section .ft{font-weight:700}
+.linkchip{border:0;cursor:pointer}.linkchip:hover{background:var(--accent-soft)}
+tr.trow{cursor:pointer}tr.trow:hover td{background:var(--soft)}
+.uchip{font-size:12px;font-weight:700;border-radius:20px;padding:3px 9px;background:var(--soft);white-space:nowrap}
+.uchip.zero{color:var(--bad);background:var(--bad-soft)}
 .phead{display:flex;gap:12px;align-items:flex-start;padding:12px 18px;border-top:1px solid var(--line);border-left:4px solid var(--c);background:var(--panel)}
 .pav{width:32px;height:32px;flex:0 0 32px;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--ink);color:var(--panel)}
 .pbody{min-width:0;flex:1}
@@ -483,12 +503,12 @@ function go(view,cat=null){route={view,cat};limit=60;history.replaceState(null,"
   document.querySelector("main").scrollIntoView({block:"start"});}
 function readHash(){let h;try{h=decodeURIComponent(location.hash.slice(1))}catch(e){h=""}
   const i=h.search(/[-/]/), v=i<0?h:h.slice(0,i), c=i<0?"":h.slice(i+1);   // split route at the first dash (or old slash) only
-  route={view:["explore","catalog","overlaps","repos"].includes(v)?v:"explore",cat:CAT[c]?c:null};}
+  route={view:["explore","catalog","overlaps","repos","usage","xray","audit"].includes(v)?v:"explore",cat:CAT[c]?c:null};}
 
 const liveCount=()=>DATA.overlaps.pairs.filter(p=>p.live.length&&!p.same_repo).length+DATA.overlaps.versions.filter(v=>v.live.length).length;
 function drawNav(rows){
   const item=(v,label,n,alert)=>`<button type="button" data-go="${v}" aria-current="${route.view===v&&!route.cat}">${icon(v)}<span>${label}</span>${n!=null?`<span class="n${alert?" alert":""}">${n}</span>`:""}</button>`;
-  $("nav").innerHTML=item("explore",T.explore)+item("catalog",T.catalog,rows.length)+item("overlaps",T.overlaps,liveCount(),true)+item("repos",T.repos);
+  $("nav").innerHTML=item("explore",T.explore)+item("catalog",T.catalog,rows.length)+item("overlaps",T.overlaps,liveCount(),true)+item("repos",T.repos)+(DATA.usage?item("usage",T.usage,DATA.usage.never,true):"")+item("xray",T.xrayNav)+item("audit",T.audit,uniqueRows(rows).filter(s=>(s.lint||[]).length).length);
   const cnt={};rows.forEach(s=>cnt[s.category]=(cnt[s.category]||0)+1);
   $("navCats").innerHTML=DATA.categories.filter(c=>cnt[c.id]).sort((a,b)=>cnt[b.id]-cnt[a.id]).map(c=>
     `<button type="button" class="cat" data-go="catalog" data-cat="${c.id}" style="--c:${c.color}" aria-current="${route.cat===c.id}"><span class="ic">${icon(c.id)}</span><span>${esc(catLabel(c.id))}</span><span class="n">${cnt[c.id]}</span></button>`).join("");
@@ -498,8 +518,8 @@ document.querySelector("aside").addEventListener("click",e=>{const b=e.target.cl
 /* ---------- views ---------- */
 function render(){
   const rows=filtered(); drawNav(rows);
-  const V={explore:viewExplore,catalog:viewCatalog,overlaps:viewOverlaps,repos:viewRepos}[route.view];
-  const [title,lead]={explore:[T.explore,T.exploreLead],catalog:[route.cat?catLabel(route.cat):T.catalog,T.catalogLead],overlaps:[T.overlaps,T.overlapsLead],repos:[T.repos,T.reposLead]}[route.view];
+  const V={explore:viewExplore,catalog:viewCatalog,overlaps:viewOverlaps,repos:viewRepos,usage:viewUsage,xray:viewXray,audit:viewAudit}[route.view];
+  const [title,lead]={explore:[T.explore,T.exploreLead],catalog:[route.cat?catLabel(route.cat):T.catalog,T.catalogLead],overlaps:[T.overlaps,T.overlapsLead],repos:[T.repos,T.reposLead],usage:[T.usage,T.usageLead],xray:[T.xrayNav,T.xrayLead],audit:[T.audit,T.auditLead]}[route.view];
   $("title").textContent=title; $("lead").textContent=lead+"  ·  "+fmt(T.brandSub,{n:DATA.sources.length,d:DATA.generated});
   $("view").innerHTML=V(route.view==="repos"?filtered(true):rows);
 }
@@ -516,7 +536,7 @@ function viewExplore(rows){
     return `<article class="ccard" style="--c:${CAT[id].color}"><header>${tile(id,true)}<b>${esc(catLabel(id))}</b><span class="count">${g.length}</span></header>
       <ul>${g.slice(0,6).map(s=>`<li><button type="button" data-id="${s.id}"><span class="dot ${statusOf(s)}" title="${esc(statusLabel(s))}"></span><span class="nm" title="${esc(s.full)}">${esc(s.title)}</span></button></li>`).join("")}</ul>
       <footer><button type="button" data-cat="${id}">${g.length>6?fmt(T.more,{n:g.length-6}):fmt(T.openCat,{n:g.length})}</button></footer></article>`}).join("");
-  return `<div class="stats">${stat(uniq,T.unique,"catalog")}${stat(inst,T.installed,"st:yes")}${stat(dl,T.downloaded,"st:no")}${stat(live,T.live,"overlaps",1)}</div>
+  return `<div class="stats">${stat(uniq,T.unique,"catalog")}${stat(inst,T.installed,"st:yes")}${stat(dl,T.downloaded,"st:no")}${stat(live,T.live,"overlaps",1)}${DATA.usage?stat(DATA.usage.never,T.uNever,"usage",1):""}</div>
     <section class="panel"><h2>${T.byTheme}</h2><div class="bars" style="margin-top:12px">${bars||`<div class="empty">${T.empty}</div>`}</div>
     <div class="legend"><span><i class="s-yes"></i>${T.lgYes}</span><span><i class="s-part"></i>${T.lgPart}</span><span><i class="s-no"></i>${T.lgNo}</span></div></section>
     <div class="cgrid">${cards}</div>`;
@@ -579,7 +599,7 @@ function viewCatalog(rows){
       ${tile(s.category)}
       <div class="body"><div class="nm" title="${esc(s.full)}">${esc(s.title)}</div><div class="ds">${descHTML(s)}</div></div>
       <div class="metas"><div class="meta">${by==="name"?`<span class="tag">${esc(pt(s))}</span>`:`<span class="muted small">${esc(s.source)}</span>`}${copies>1&&$("dedupe").checked?`<br><span class="muted small">${fmt(T.places,{n:copies})}</span>`:""}</div>
-      <div class="meta">${pill(s)}</div></div>
+      <div class="meta">${pill(s)}${s.usage?` <span class="uchip${s.usage.fires?"":" zero"}" title="${T.uFires}">${s.usage.fires?s.usage.fires+"×":T.uNone}</span>`:""}</div></div>
       <div class="act">${st==="no"?`<button type="button" class="btn primary" data-install="${s.id}">${icon("dl")}${T.install}</button>`:`<button type="button" class="btn ghost" data-id="${s.id}">${T.open} ${icon("ext")}</button>`}</div></div>`;
   });
   const sortSel=`<label class="field" style="min-height:40px"><span class="muted small">${T.sort}</span><select id="sortBy">${[["cat",T.sCat],["repo",T.sRepo],["name",T.sName]].map(([v,l])=>`<option value="${v}"${v===sortBy?" selected":""}>${l}</option>`).join("")}</select></label>`;
@@ -654,6 +674,7 @@ function openDrawer(id,from){
     <section><h4>${T.dSrc}</h4><b>${esc(pkgOf(s).title)}</b> ${starsHTML(pkgOf(s))} ${licHTML(pkgOf(s),pkgOf(s).kind!=="local")}${pkgOf(s).author?` <span class="muted">· ${esc(pkgOf(s).author)}</span>`:""}${safeHref(pkgOf(s).url)?` · <a href="${esc(safeHref(pkgOf(s).url))}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${esc(linkLabel(pkgOf(s).url))}</a>`:""}<div class="muted small">${esc(s.source)}</div>${pkgOf(s).description?`<p class="muted small" style="margin:6px 0 0">${pkgDesc(pkgOf(s))}</p>`:""}</section>
     <section><h4>${T.dPath}</h4>${copies.map(x=>`<div class="code" style="margin-bottom:6px"><code>${esc(x.path)}</code><button type="button" class="btn ghost" style="min-width:44px" data-copy="${esc(x.path)}" aria-label="${T.copy}">${icon("copy")}</button></div>`).join("")}</section>
     ${s.installed==="no"?`<section><h4>${T.dInst}</h4><div class="code"><code>${esc(installCmd(s))}</code><button type="button" class="btn primary" data-copy="${esc(installCmd(s))}">${icon("copy")}${T.copy}</button></div><p class="muted small">${T.dInstHelp}</p></section>`:""}
+    ${drawerExtra(s)}
     <section class="sim-list"><h4>${T.dSim}</h4>${nb.length?nb.map(([nid,sim])=>`<button type="button" data-nid="${nid}">${tile(S[nid].category,true)}<span style="flex:1;min-width:0"><b>${esc(S[nid].title)}</b><br><span class="muted small">${esc(pkgOf(S[nid]).title)}</span></span><span class="chip">${Math.round(sim*100)}%</span></button>`).join(""):`<p class="muted">${T.none}</p>`}</section>`;
   $("drawer").hidden=false; requestAnimationFrame(()=>{$("drawer").classList.add("on");$("scrim").classList.add("on");$("dClose").focus();});
 }
@@ -677,6 +698,194 @@ matchMedia("(min-width:861px)").addEventListener("change",e=>{if(e.matches)close
 (function(){const t=store.get("ss-theme");if(t)document.documentElement.dataset.theme=t;
   $("theme").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
   const nx=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=nx;store.set("ss-theme",nx);};})();
+
+/* ===================== Usage, X-ray and Audit modes ===================== */
+const I18N2={
+  tr:{colName:"Skill",usage:"Kullanım",usageLead:"Kurduğun skill'lerden hangileri gerçekten çalışıyor, ne kadar token harcıyor, hangileri hiç kullanılmamış.",
+    xrayNav:"Röntgen",xrayLead:"Her skill'in adım adım akışı ve 0-100 kalite puanı. En düşük puanlılar önce. (Fikir: silvesterdivas/skillscope)",
+    audit:"Denetim",auditLead:"Token harcamadan yapısal kontroller ve bir isteği hangi skill'lerin kapacağını gösteren simülatör. (Fikir: amd/skillscope)",
+    uPeriod:"Kayıt aralığı: {a} – {b} · {s} oturum",uUsed:"kullanılan skill",uNever:"hiç kullanılmamış",uTokens:"ölçülen token",uIdle:"boşta yük / oturum",
+    uIdleHelp:"Kullanılmayan skill'lerin açıklamaları da her oturumda Claude'un bağlamına girer. Bu sayı açıklama uzunluğundan yapılan kaba bir üst sınır tahminidir (karakter / 4).",
+    uFires:"Çağrı",uSess:"Oturum",uLast:"Son kullanım",uTok:"Token",uOver:"Yük/oturum",uOnlyNever:"Yalnız hiç kullanılmayanlar",uNone:"hiç",
+    uNoData:"Kullanım verisi yok. Dashboard'u --usage ile üret.",uNote:"Kaynak: bu bilgisayardaki Claude Code oturum kayıtları (yalnız skill adı, tarih ve token sayısı okunur). Claude Code eski kayıtları zamanla siler; aralığa dikkat et.",
+    xScore:"Kalite puanı",xFlow:"Akış",xFixes:"Önerilen düzeltmeler",xNoFix:"Önerilen düzeltme yok.",
+    p_trigger:"Tetikleyici",p_structure:"Yapı",p_size:"Boyut",p_examples:"Örnek ve çıktı",p_resources:"Kaynaklar",
+    k_trigger:"tetikleyici",k_section:"bölüm",k_step:"adım",k_branch:"karar",k_tool:"araç",k_output:"çıktı",k_chain:"başka skill",k_more:"+{n} öğe daha",
+    f_desc_missing:"Açıklama yok: Claude bu skill'i ne zaman kullanacağını bilemez.",f_desc_length:"Açıklama çok kısa ya da 1024 karakterden uzun.",
+    f_no_trigger_phrase:"Açıklamada \"şu durumda kullan\" gibi bir tetikleyici ifade yok.",f_few_sections:"Gövdede en az iki başlık (##) olsun.",
+    f_no_steps:"Numaralı ya da maddeli adımlar ekle.",f_too_long:"Gövde 500 satırı aşıyor; ayrıntıyı references/ dosyalarına taşı.",
+    f_too_short:"Gövde çok kısa; Claude'a yeterli yönerge yok.",f_no_examples:"Bir örnek ekle (girdi ve beklenen sonuç).",
+    f_no_output:"Çıktının biçimini anlatan bir bölüm ekle.",f_missing_ref:"Gövdede adı geçen bir dosya klasörde yok.",
+    f_name_mismatch:"name alanı klasör adıyla aynı değil.",f_name_format:"Ad küçük harf, rakam ve tire olmalı (en fazla 64 karakter).",f_name_missing:"Frontmatter'da name yok.",
+    f_frontmatter_missing:"Dosya --- ile başlayan frontmatter içermiyor.",f_desc_too_long:"Açıklama 1024 karakteri aşıyor.",f_body_too_long:"Gövde 500 satırı aşıyor.",
+    aStruct:"Yapısal denetim",aStructHelp:"Bu sorunlar dosyalara bakılarak bulunur, token harcamaz. Sayı, sorunun görüldüğü tekil skill sayısıdır.",
+    aRouter:"Yönlendirme simülatörü",aRouterHelp:"Bir istek yaz; hangi skill'lerin açıklaması bu isteğe en çok benziyor, gösterir. Claude'un gerçek seçimi değil, açıklamalardaki örtüşmenin bir tahminidir.",
+    aPlaceholder:"Örn: bu PDF'i özetleyip sunum yap",aInclDl:"İndirilmiş ama kurulu olmayanları da kat",aClose:"Yakın yarış: bu skill'ler aynı isteği kapmak için yarışabilir.",
+    aNoMatch:"Eşleşen skill yok.",aClean:"Yapısal sorun bulunmadı.",dUsage:"Kullanım",dXray:"Röntgen",dLint:"Denetim",more2:"+{n} daha"},
+  en:{colName:"Skill",usage:"Usage",usageLead:"Which installed skills actually run, how many tokens they use, and which have never been used.",
+    xrayNav:"X-ray",xrayLead:"Each skill's step-by-step flow and a 0-100 quality score, lowest first. (Idea: silvesterdivas/skillscope)",
+    audit:"Audit",auditLead:"Structural checks that cost no tokens, and a simulator that shows which skills would compete for a request. (Idea: amd/skillscope)",
+    uPeriod:"Transcripts: {a} – {b} · {s} sessions",uUsed:"skills used",uNever:"never used",uTokens:"measured tokens",uIdle:"idle load / session",
+    uIdleHelp:"Unused skills still put their description into Claude's context in every session. This is a rough upper-bound estimate from description length (characters / 4).",
+    uFires:"Calls",uSess:"Sessions",uLast:"Last used",uTok:"Tokens",uOver:"Load/session",uOnlyNever:"Never-used only",uNone:"never",
+    uNoData:"No usage data. Build the dashboard with --usage.",uNote:"Source: Claude Code transcripts on this machine (only skill name, date and token counts are read). Claude Code deletes old transcripts over time; mind the period.",
+    xScore:"Quality score",xFlow:"Flow",xFixes:"Suggested fixes",xNoFix:"No suggested fixes.",
+    p_trigger:"Trigger",p_structure:"Structure",p_size:"Size",p_examples:"Examples and output",p_resources:"Resources",
+    k_trigger:"trigger",k_section:"section",k_step:"step",k_branch:"decision",k_tool:"tool",k_output:"output",k_chain:"other skill",k_more:"+{n} more",
+    f_desc_missing:"No description: Claude cannot tell when to use this skill.",f_desc_length:"Description is very short or longer than 1024 characters.",
+    f_no_trigger_phrase:"The description has no trigger phrase such as \"use when\".",f_few_sections:"Give the body at least two headings (##).",
+    f_no_steps:"Add numbered or bulleted steps.",f_too_long:"The body is over 500 lines; move detail into references/ files.",
+    f_too_short:"The body is very short; Claude gets little guidance.",f_no_examples:"Add an example (input and expected result).",
+    f_no_output:"Add a section that describes the output format.",f_missing_ref:"A file named in the body is missing from the folder.",
+    f_name_mismatch:"The name field differs from the folder name.",f_name_format:"Use lower-case letters, digits and hyphens (max 64).",f_name_missing:"No name in the front matter.",
+    f_frontmatter_missing:"The file has no front matter starting with ---.",f_desc_too_long:"Description is over 1024 characters.",f_body_too_long:"Body is over 500 lines.",
+    aStruct:"Structural audit",aStructHelp:"Found by reading the files; costs no tokens. Counts are unique skills.",
+    aRouter:"Routing simulator",aRouterHelp:"Type a request to see whose descriptions match it best. An estimate of description overlap, not Claude's actual choice.",
+    aPlaceholder:"e.g. summarise this PDF and turn it into slides",aInclDl:"Include downloaded, not installed",aClose:"Close race: these skills may compete for the same request.",
+    aNoMatch:"No matching skill.",aClean:"No structural problems found.",dUsage:"Usage",dXray:"X-ray",dLint:"Audit",more2:"+{n} more"},
+  zh:{colName:"技能",usage:"使用情况",usageLead:"已安装的技能中哪些真正在运行、消耗多少 token、哪些从未使用。",
+    xrayNav:"透视",xrayLead:"每个技能的分步流程和 0-100 质量评分，最低分在前。（思路来自 silvesterdivas/skillscope）",
+    audit:"审查",auditLead:"不消耗 token 的结构检查，以及显示哪些技能会争夺同一请求的模拟器。（思路来自 amd/skillscope）",
+    uPeriod:"记录范围：{a} – {b} · {s} 个会话",uUsed:"个已使用技能",uNever:"从未使用",uTokens:"实测 token",uIdle:"每会话闲置负载",
+    uIdleHelp:"未使用的技能，其描述仍会在每个会话中进入 Claude 的上下文。此数为按描述长度（字符 / 4）粗略估算的上限。",
+    uFires:"调用",uSess:"会话",uLast:"最近使用",uTok:"Token",uOver:"负载/会话",uOnlyNever:"仅显示从未使用",uNone:"从未",
+    uNoData:"没有使用数据。请用 --usage 生成仪表盘。",uNote:"来源：本机的 Claude Code 会话记录（只读取技能名、日期和 token 数）。Claude Code 会逐渐删除旧记录，请注意时间范围。",
+    xScore:"质量评分",xFlow:"流程",xFixes:"建议修复",xNoFix:"没有建议修复。",
+    p_trigger:"触发",p_structure:"结构",p_size:"篇幅",p_examples:"示例与输出",p_resources:"资源",
+    k_trigger:"触发",k_section:"章节",k_step:"步骤",k_branch:"判断",k_tool:"工具",k_output:"输出",k_chain:"其他技能",k_more:"另有 {n} 项",
+    f_desc_missing:"没有描述：Claude 无法判断何时使用此技能。",f_desc_length:"描述过短或超过 1024 个字符。",
+    f_no_trigger_phrase:"描述中没有“在……时使用”之类的触发语。",f_few_sections:"正文至少需要两个标题（##）。",
+    f_no_steps:"添加编号或项目符号步骤。",f_too_long:"正文超过 500 行；请把细节移到 references/ 文件。",
+    f_too_short:"正文过短，给 Claude 的指引不足。",f_no_examples:"添加一个示例（输入和预期结果）。",
+    f_no_output:"添加说明输出格式的章节。",f_missing_ref:"正文提到的某个文件在文件夹中不存在。",
+    f_name_mismatch:"name 字段与文件夹名不同。",f_name_format:"名称应为小写字母、数字和连字符（最多 64 个）。",f_name_missing:"前置元数据中没有 name。",
+    f_frontmatter_missing:"文件没有以 --- 开头的前置元数据。",f_desc_too_long:"描述超过 1024 个字符。",f_body_too_long:"正文超过 500 行。",
+    aStruct:"结构审查",aStructHelp:"通过读取文件发现，不消耗 token。计数为独立技能数。",
+    aRouter:"路由模拟器",aRouterHelp:"输入一个请求，查看哪些技能的描述与之最匹配。这是描述重叠的估算，不是 Claude 的实际选择。",
+    aPlaceholder:"例如：总结这个 PDF 并做成幻灯片",aInclDl:"包括已下载但未安装的",aClose:"接近竞争：这些技能可能争夺同一请求。",
+    aNoMatch:"没有匹配的技能。",aClean:"未发现结构问题。",dUsage:"使用情况",dXray:"透视",dLint:"审查",more2:"另有 {n} 个"},
+  es:{colName:"Skill",usage:"Uso",usageLead:"Qué skills instaladas se ejecutan de verdad, cuántos tokens gastan y cuáles no se han usado nunca.",
+    xrayNav:"Rayos X",xrayLead:"El flujo paso a paso de cada skill y una puntuación de calidad de 0 a 100, la más baja primero. (Idea: silvesterdivas/skillscope)",
+    audit:"Auditoría",auditLead:"Comprobaciones estructurales sin coste de tokens y un simulador que muestra qué skills competirían por una petición. (Idea: amd/skillscope)",
+    uPeriod:"Registros: {a} – {b} · {s} sesiones",uUsed:"skills usadas",uNever:"nunca usadas",uTokens:"tokens medidos",uIdle:"carga inactiva / sesión",
+    uIdleHelp:"Las skills sin uso también meten su descripción en el contexto de Claude en cada sesión. Es una estimación aproximada de máximo según la longitud de la descripción (caracteres / 4).",
+    uFires:"Llamadas",uSess:"Sesiones",uLast:"Último uso",uTok:"Tokens",uOver:"Carga/sesión",uOnlyNever:"Solo las nunca usadas",uNone:"nunca",
+    uNoData:"No hay datos de uso. Genera el panel con --usage.",uNote:"Fuente: registros de sesión de Claude Code en este equipo (solo se leen el nombre de la skill, la fecha y los tokens). Claude Code borra los registros antiguos; ten en cuenta el periodo.",
+    xScore:"Puntuación de calidad",xFlow:"Flujo",xFixes:"Correcciones sugeridas",xNoFix:"No hay correcciones sugeridas.",
+    p_trigger:"Disparador",p_structure:"Estructura",p_size:"Tamaño",p_examples:"Ejemplos y salida",p_resources:"Recursos",
+    k_trigger:"disparador",k_section:"sección",k_step:"paso",k_branch:"decisión",k_tool:"herramienta",k_output:"salida",k_chain:"otra skill",k_more:"+{n} más",
+    f_desc_missing:"Sin descripción: Claude no sabe cuándo usar esta skill.",f_desc_length:"La descripción es muy corta o supera 1024 caracteres.",
+    f_no_trigger_phrase:"La descripción no tiene una frase disparadora como \"úsala cuando\".",f_few_sections:"El cuerpo debería tener al menos dos encabezados (##).",
+    f_no_steps:"Añade pasos numerados o con viñetas.",f_too_long:"El cuerpo supera 500 líneas; mueve el detalle a archivos references/.",
+    f_too_short:"El cuerpo es muy corto; Claude recibe poca guía.",f_no_examples:"Añade un ejemplo (entrada y resultado esperado).",
+    f_no_output:"Añade una sección que describa el formato de salida.",f_missing_ref:"Falta en la carpeta un archivo citado en el cuerpo.",
+    f_name_mismatch:"El campo name no coincide con el nombre de la carpeta.",f_name_format:"Usa minúsculas, dígitos y guiones (máx. 64).",f_name_missing:"No hay name en el front matter.",
+    f_frontmatter_missing:"El archivo no tiene front matter que empiece con ---.",f_desc_too_long:"La descripción supera 1024 caracteres.",f_body_too_long:"El cuerpo supera 500 líneas.",
+    aStruct:"Auditoría estructural",aStructHelp:"Se detecta leyendo los archivos; no gasta tokens. Los recuentos son skills únicas.",
+    aRouter:"Simulador de enrutamiento",aRouterHelp:"Escribe una petición para ver qué descripciones se parecen más. Es una estimación del solapamiento, no la elección real de Claude.",
+    aPlaceholder:"p. ej. resume este PDF y conviértelo en diapositivas",aInclDl:"Incluir descargadas no instaladas",aClose:"Carrera ajustada: estas skills pueden competir por la misma petición.",
+    aNoMatch:"Ninguna skill coincide.",aClean:"No se encontraron problemas estructurales.",dUsage:"Uso",dXray:"Rayos X",dLint:"Auditoría",more2:"+{n} más"}
+};
+Object.assign(T,I18N2.en,I18N2[LANG]||{});
+Object.assign(P,{
+  usage:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  xray:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 12h16M12 4v16" opacity=".45"/><circle cx="12" cy="12" r="3"/>',
+  audit:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/>'
+});
+const fixText=c=>T["f_"+c]||c;
+const uniqueRows=rows=>{const seen=new Set();return rows.filter(s=>seen.has(s.hash)?false:(seen.add(s.hash),true));};
+const flowOf=s=>(repOf(s).xray||{flow:[]});
+
+function scoreBar(q){const v=q.score,c=v>=80?"var(--ok)":v>=60?"var(--warn)":"var(--bad)";
+  return `<span class="score"><b style="color:${c}">${v}</b><span class="sbar"><i style="width:${v}%;background:${c}"></i></span></span>`;}
+
+function viewUsage(rows){
+  const U=DATA.usage;
+  if(!U)return `<section class="panel"><p class="muted">${T.uNoData}</p></section>`;
+  let list=uniqueRows(rows.filter(s=>s.active&&s.usage));
+  if(onlyNever)list=list.filter(s=>!s.usage.fires);
+  list.sort((a,b)=>b.usage.fires-a.usage.fires||b.usage.tokens-a.usage.tokens||a.title.localeCompare(b.title,LANG));
+  const stat=(n,l,cls)=>`<div class="stat ${cls||""}" style="cursor:default"><b>${n}</b><span>${l}</span></div>`;
+  return `<p class="muted small">${fmt(T.uPeriod,{a:U.first||"-",b:U.last||"-",s:U.sessions})}</p>
+    <div class="stats">${stat(U.used+" / "+U.installed,T.uUsed)}${stat(U.never,T.uNever,U.never?"alert":"")}${stat(nfmt.format(U.tokens),T.uTokens)}${stat("~"+nfmt.format(U.idle_overhead),T.uIdle)}</div>
+    <p class="muted small">${T.uIdleHelp}</p>
+    <div class="cat-head"><h2>${fmt(T.nSkills,{n:list.length})}</h2><label class="check"><input type="checkbox" id="onlyNever" ${onlyNever?"checked":""}><span>${T.uOnlyNever}</span></label></div>
+    <section class="panel tbl-wrap"><table><thead><tr><th>${T.colName}</th><th class="n">${T.uFires}</th><th class="n">${T.uSess}</th><th>${T.uLast}</th><th class="n">${T.uTok}</th><th class="n">${T.uOver}</th></tr></thead><tbody>`+
+    (list.length?list.map(s=>`<tr class="trow" data-id="${s.id}"><td><span style="display:inline-flex;gap:10px;align-items:center">${tile(s.category,true)}<span><b>${esc(s.title)}</b><br><span class="muted small">${esc(pkgOf(s).title)}</span></span></span></td>
+      <td class="n">${s.usage.fires?`<b>${s.usage.fires}</b>`:`<span class="chip">${T.uNone}</span>`}</td><td class="n">${s.usage.sessions||"-"}</td><td>${s.usage.last||"-"}</td>
+      <td class="n">${s.usage.tokens?nfmt.format(s.usage.tokens):"-"}</td><td class="n muted">~${s.usage.overhead}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">${T.empty}</td></tr>`)+
+    `</tbody></table></section><p class="muted small">${T.uNote}</p>`;
+}
+let onlyNever=false;
+
+function viewXray(rows){
+  const list=uniqueRows(rows).filter(s=>s.quality).sort((a,b)=>a.quality.score-b.quality.score||a.title.localeCompare(b.title,LANG));
+  return `<div class="list">${list.slice(0,limit).map(s=>`<div class="item" style="--c:${CAT[s.category].color}" data-id="${s.id}" role="button" tabindex="0">
+      ${tile(s.category)}<div class="body"><div class="nm">${esc(s.title)}</div><div class="ds">${s.quality.fixes.length?esc(fixText(s.quality.fixes[0])):T.xNoFix}</div></div>
+      <div class="meta"><span class="muted small">${esc(pkgOf(s).title)}</span></div><div class="meta">${scoreBar(s.quality)}</div>
+      <div class="act"><button type="button" class="btn ghost" data-id="${s.id}">${T.open} ${icon("ext")}</button></div></div>`).join("")||`<div class="empty">${T.empty}</div>`}
+    ${list.length>limit?`<div class="pager"><button type="button" class="btn ghost" id="loadMore">${fmt(T.loadMore,{n:list.length-limit})}</button></div>`:""}</div>`;
+}
+
+function viewAudit(rows){
+  const groups={};uniqueRows(rows).forEach(s=>(s.lint||[]).forEach(c=>(groups[c]=groups[c]||[]).push(s)));
+  const codes=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+  const struct=codes.length?codes.map(c=>`<div class="grp"><b>${esc(fixText(c))}</b> <span class="chip bad">${groups[c].length}</span>
+      <div class="chips" style="justify-content:flex-start;margin-top:8px">${groups[c].slice(0,14).map(s=>`<button type="button" class="chip linkchip" data-id="${s.id}">${esc(s.title)}</button>`).join("")}${groups[c].length>14?`<span class="chip">${fmt(T.more2,{n:groups[c].length-14})}</span>`:""}</div></div>`).join("")
+    :`<p class="muted">${T.aClean}</p>`;
+  return `<section class="panel"><h2>${T.aRouter}</h2><p class="muted small">${T.aRouterHelp}</p>
+      <label class="field" style="margin:10px 0"><span class="sr">${T.aRouter}</span><input id="routeQ" type="search" placeholder="${esc(T.aPlaceholder)}" value="${esc(routeQ)}"></label>
+      <label class="check"><input type="checkbox" id="routeDl" ${routeDl?"checked":""}><span>${T.aInclDl}</span></label>
+      <div id="routeOut">${routeHTML()}</div></section>
+    <section class="panel"><h2>${T.aStruct}</h2><p class="muted small">${T.aStructHelp}</p>${struct}</section>`;
+}
+
+/* routing simulator: TF-IDF over name + description (+ translation), cosine with the request */
+let routeQ="",routeDl=false,routeIdx=null;
+const RSTOP=new Set("the and for with this that when use user from into your you are not any all can ile ve bir bu için gibi olarak kullan".split(" "));
+const rtok=t=>(String(t||"").toLocaleLowerCase(LANG).match(/[\p{L}\p{N}]+/gu)||[]).filter(w=>w.length>=3&&!RSTOP.has(w));
+function buildRoute(){
+  const docs=uniqueRows(S).filter(s=>routeDl||s.active).map(s=>{const tf={};
+    [...rtok(s.title),...rtok(s.title),...rtok(s.description),...rtok(translated(s))].forEach(w=>tf[w]=(tf[w]||0)+1);return {s,tf};});
+  const df={};docs.forEach(d=>Object.keys(d.tf).forEach(w=>df[w]=(df[w]||0)+1));
+  const N=docs.length, idf=w=>1+Math.log((N+1)/((df[w]||0)+1));
+  docs.forEach(d=>{let n=0;d.v={};for(const w in d.tf){d.v[w]=(1+Math.log(d.tf[w]))*idf(w);n+=d.v[w]**2;}n=Math.sqrt(n)||1;for(const w in d.v)d.v[w]/=n;});
+  routeIdx={docs,idf};
+}
+function routeMatch(q){
+  if(!routeIdx)buildRoute();
+  const tf={};rtok(q).forEach(w=>tf[w]=(tf[w]||0)+1);
+  const v={};let n=0;for(const w in tf){v[w]=(1+Math.log(tf[w]))*routeIdx.idf(w);n+=v[w]**2;}n=Math.sqrt(n)||1;
+  return routeIdx.docs.map(d=>{let sc=0;for(const w in v)if(d.v[w])sc+=v[w]/n*d.v[w];return {s:d.s,sc};}).filter(x=>x.sc>0.05).sort((a,b)=>b.sc-a.sc).slice(0,8);
+}
+function routeHTML(){
+  if(!routeQ.trim())return "";
+  const r=routeMatch(routeQ);
+  if(!r.length)return `<p class="muted">${T.aNoMatch}</p>`;
+  const close=r.length>1&&r[1].sc>=r[0].sc*0.85&&r[1].sc>0.15;
+  return (close?`<p class="chip bad" style="display:inline-block;margin:10px 0">${T.aClose}</p>`:"")+
+    `<div class="sim-list" style="margin-top:8px">${r.map((x,i)=>`<button type="button" data-id="${x.s.id}">${tile(x.s.category,true)}<span style="flex:1;min-width:0"><b>${esc(x.s.title)}</b><br><span class="muted small">${esc(pkgOf(x.s).title)}</span></span>
+      ${pill(x.s)}<span class="score" style="min-width:110px"><b>${Math.round(x.sc*100)}%</b><span class="sbar"><i style="width:${Math.min(100,x.sc*100)}%;background:${i===0?"var(--accent)":"var(--muted)"}"></i></span></span></button>`).join("")}</div>`;
+}
+$("view").addEventListener("input",e=>{
+  if(e.target.id==="routeQ"){routeQ=e.target.value;const o=$("routeOut");if(o)o.innerHTML=routeHTML();}
+  if(e.target.id==="routeDl"){routeDl=e.target.checked;routeIdx=null;const o=$("routeOut");if(o)o.innerHTML=routeHTML();}
+  if(e.target.id==="onlyNever"){onlyNever=e.target.checked;render();}
+});
+$("view").addEventListener("click",e=>{const r=e.target.closest("tr.trow[data-id]");if(r)openDrawer(+r.dataset.id,r);});
+
+/* drawer sections for usage, x-ray and audit */
+function drawerExtra(s){
+  const u=s.usage, q=s.quality, x=flowOf(s), lint=s.lint||[];
+  let h="";
+  if(u)h+=`<section><h4>${T.dUsage}</h4>${u.fires?`<b>${u.fires}×</b> · ${u.sessions} ${T.uSess.toLocaleLowerCase(LANG)} · ${T.uLast}: ${esc(u.last)}${u.tokens?` · ${nfmt.format(u.tokens)} ${T.uTok.toLocaleLowerCase(LANG)}`:""}`:`<span class="chip bad">${T.uNone}</span>`} <span class="muted small">· ~${u.overhead} ${T.uOver.toLocaleLowerCase(LANG)}</span></section>`;
+  if(q)h+=`<section><h4>${T.dXray} · ${T.xScore}</h4>${scoreBar(q)}
+    <div class="parts">${Object.entries(q.parts).map(([k,v])=>`<span class="part"><span>${T["p_"+k]}</span><span class="sbar"><i style="width:${v*5}%"></i></span><b>${v}/20</b></span>`).join("")}</div>
+    <h4 style="margin-top:14px">${T.xFixes}</h4>${q.fixes.length?`<ul class="fixes">${q.fixes.map(c=>`<li>${esc(fixText(c))}</li>`).join("")}</ul>`:`<p class="muted small">${T.xNoFix}</p>`}
+    <h4 style="margin-top:14px">${T.xFlow}</h4><ol class="flow">${x.flow.map(n=>`<li class="fnode k-${n.k}"><span class="fk">${n.k==="more"?fmt(T.k_more,{n:n.t}):T["k_"+n.k]}</span>${n.k==="more"?"":`<span class="ft">${esc(n.t)}</span>`}${(n.tools||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</li>`).join("")}</ol></section>`;
+  if(lint.length)h+=`<section><h4>${T.dLint}</h4><ul class="fixes">${lint.map(c=>`<li>${esc(fixText(c))}</li>`).join("")}</ul></section>`;
+  return h;
+}
 
 /* ---------- init ---------- */
 drawLang(); readHash(); render();

@@ -15,10 +15,12 @@ The tool is `skillscope.py`, in the same folder as this file (the skill's base d
 - **Languages.** Default set: `tr,en,zh,es`. Use the user's language as `--lang` (the dashboard's default language). If they ask for another language (for example German), add its ISO code to `--langs` (`tr,en,zh,es,de`). For a language outside the four built-in ones, the dashboard text falls back to English and only the descriptions are translated.
 - **GitHub.** `--github` fetches stars and licenses for linked GitHub repos: it sends the owner/name of every GitHub repo linked by a scanned skill (private ones included) to api.github.com and caches the answers for 24 hours. Leave it out if the user is offline or declines.
 
+- **Usage.** `--usage` reads the local Claude Code transcripts (`~/.claude/projects`) to show which installed skills actually fired, how many tokens they used and which were never used. Only skill names, dates, session ids and token counts are read; nothing leaves the machine. Ask once, because transcripts are private.
+
 ## 2. Scan and export what still needs translating
 
 ```bash
-python TOOL --github --lang <ui-lang> --langs <langs> [--path "Label=DIR" ...] --export-missing WORK
+python TOOL --github [--usage] --lang <ui-lang> --langs <langs> [--path "Label=DIR" ...] --export-missing WORK
 ```
 
 The output ends with `translations missing: tr=0, en=12, zh=530, ...` and writes `WORK/missing-<lang>.json` for every language with gaps. Each file is a JSON object `{key: original text}`. Translations already cached in `translations/<lang>.json` are not exported again, so a re-run only asks for new skills.
@@ -75,6 +77,8 @@ Tell the user:
 
 - How many skills were found, how many are unique, and how many are installed.
 - The number of **live overlaps** (two skills from different packages, both loaded in the same tool, doing the same job), with the top three pairs by name.
+- With `--usage`: how many installed skills were never used in the transcript period, and the most used ones.
+- The lowest X-ray quality scores and the most common audit problems, in one line each.
 - Downloaded repos that add nothing new. The *Repo report card* page shows this.
 - Where the dashboard file is, and that the flag buttons in the sidebar, under the logo, switches between the prepared languages.
 
