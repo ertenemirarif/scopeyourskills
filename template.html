@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="__LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkillScope</title>
+<link rel="icon" href="__LOGO__">
+<style>
+:root{
+  --bg:#f3f6f6;--panel:#ffffff;--side:#f8fafa;--ink:#16211f;--muted:#5d6b69;--line:#e1e8e7;--soft:#eef3f2;--band:#f1f5f4;
+  --accent:#0f766e;--accent-ink:#ffffff;--accent-soft:#d9f2ee;
+  --ok:#15803d;--ok-soft:#dcfce7;--warn:#b45309;--warn-soft:#fef3c7;--bad:#c42b2b;--bad-soft:#fde4e4;
+  --shadow:0 1px 2px rgba(16,40,36,.05),0 6px 24px rgba(16,40,36,.06);--r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1514;--panel:#151e1d;--side:#121a19;--ink:#e3ecea;--muted:#9bb0ac;--line:#24312f;--soft:#1c2826;--band:#1a2423;
+  --accent:#2dd4bf;--accent-ink:#06201c;--accent-soft:#16332f;--ok:#4ade80;--ok-soft:#163222;--warn:#fbbf24;--warn-soft:#3a2d10;
+  --bad:#f87171;--bad-soft:#3b1a1a;--shadow:none;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1514;--panel:#151e1d;--side:#121a19;--ink:#e3ecea;--muted:#9bb0ac;--line:#24312f;--soft:#1c2826;--band:#1a2423;
+  --accent:#2dd4bf;--accent-ink:#06201c;--accent-soft:#16332f;--ok:#4ade80;--ok-soft:#163222;--warn:#fbbf24;--warn-soft:#3a2d10;
+  --bad:#f87171;--bad-soft:#3b1a1a;--shadow:none;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* layout */
+.app{display:grid;grid-template-columns:268px minmax(0,1fr);min-height:100vh;max-width:1440px;margin:0 auto}
+aside{background:var(--side);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+main{padding:28px 28px 64px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;padding:0 8px 18px}
+.brand .logo{width:40px;height:40px;object-fit:contain}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:8px 12px;border:0;background:none;border-radius:10px;cursor:pointer;text-align:left;font-weight:600}
+.nav button:hover{background:var(--soft)}
+.nav button[aria-current="true"]{background:var(--accent-soft);color:var(--ink)}
+.nav button[aria-current="true"] svg{color:var(--accent)}
+.nav .n{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.nav .n.alert{background:var(--bad-soft);color:var(--bad);border-radius:20px;padding:1px 8px}
+.nav-h{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:22px 12px 8px}
+.nav .cat .ic{color:var(--c)}
+.menu-btn{display:none}
+#sideScrim{display:none}
+
+h1{font-size:28px;line-height:1.2;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:20px;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 20px;font-size:16px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+/* toolbar */
+.toolbar{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:12px;margin-bottom:12px}
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:20px}
+.field{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 14px;min-height:46px}
+.field input,.field select{border:0;background:none;outline:none;width:100%;min-height:44px}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field select{cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.seg-wrap{display:flex;align-items:center;gap:10px;margin-left:auto}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;border-radius:9px;padding:0 16px;min-height:38px;cursor:pointer;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+/* cards */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;cursor:pointer;min-height:44px}
+.stat:hover{border-color:var(--accent)}
+.stat b{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted)}
+.stat.alert{background:var(--bad-soft);border-color:transparent}
+.stat.alert b{color:var(--bad)}
+.stat .go{margin-top:6px;font-size:12px;font-weight:700;color:var(--bad)}
+
+/* status bars */
+.bars{display:grid;gap:4px}
+.bar{display:grid;grid-template-columns:minmax(150px,240px) minmax(0,1fr) 40px;gap:14px;align-items:center;border:0;background:none;text-align:left;padding:6px 8px;border-radius:10px;cursor:pointer;min-height:40px}
+.bar:hover{background:var(--soft)}
+.bar .t{display:flex;align-items:center;gap:10px;min-width:0}
+.bar .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .t .ic{color:var(--c)}
+.track{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--soft)}
+.track i{display:block;height:100%}
+.s-yes{background:var(--ok)} .s-part{background:var(--warn)} .s-no{background:var(--muted);opacity:.35}
+.bar .n{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.ccard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.ccard header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.ccard header b{font-size:16px;flex:1;min-width:0}
+.ccard ul{list-style:none;margin:0;padding:6px 0;flex:1}
+.ccard li button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:8px 16px;min-height:40px;cursor:pointer}
+.ccard li button:hover{background:var(--soft)}
+.ccard li .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ccard footer button{width:100%;border:0;border-top:1px solid var(--line);background:none;min-height:44px;font-weight:700;color:var(--accent);cursor:pointer}
+.ccard footer button:hover{background:var(--soft)}
+.tile{width:40px;height:40px;flex:0 0 40px;border-radius:11px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.tile.sm{width:32px;height:32px;flex-basis:32px;border-radius:9px}
+.count{font-size:12px;font-weight:700;background:var(--soft);border-radius:20px;padding:2px 10px;font-variant-numeric:tabular-nums}
+
+/* status pill */
+.pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:700;border-radius:20px;padding:4px 10px}
+.pill svg.i{width:14px;height:14px;flex-basis:14px}
+.p-yes{background:var(--ok-soft);color:var(--ok)}
+.p-part{background:var(--warn-soft);color:var(--warn)}
+.p-no{background:var(--soft);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.dot.yes{background:var(--ok)}.dot.part{background:var(--warn)}.dot.no{border:1.5px solid var(--muted)}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:7px;padding:2px 8px;background:var(--accent-soft);color:var(--ink);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
+/* catalog list */
+.cat-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.ghead{display:flex;align-items:center;gap:10px;padding:12px 18px;font-size:16px;font-weight:800;color:var(--ink);background:color-mix(in srgb,var(--c) 10%,var(--panel));border-top:1px solid var(--line);border-left:4px solid var(--c)}
+.ghead:first-child{border-top:0}
+.ghead .ic{color:var(--c)}
+.lic{display:inline-flex;align-items:center;font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px;border:1px solid var(--line);white-space:nowrap}
+.lic.mit{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.lic.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.lic.none{color:var(--muted);border-style:dashed}
+.stars{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap}
+.stars svg.i{width:14px;height:14px;flex-basis:14px;fill:#e0a400;stroke:#e0a400}
+.flags{display:flex;gap:6px;margin:0 8px 16px;flex-wrap:wrap}
+.flags button{display:grid;place-items:center;width:44px;height:36px;border-radius:9px;border:2px solid transparent;background:var(--panel);cursor:pointer;padding:0;box-shadow:0 0 0 1px var(--line)}
+.flags button:hover{box-shadow:0 0 0 1px var(--accent)}
+.flags button[aria-pressed="true"]{border-color:var(--accent);box-shadow:none}
+.flags svg{width:28px;height:19px;border-radius:3px;display:block}
+.flags .code{font-size:12px;font-weight:800}
+.phead{display:flex;gap:12px;align-items:flex-start;padding:12px 18px;border-top:1px solid var(--line);border-left:4px solid var(--c);background:var(--panel)}
+.pav{width:32px;height:32px;flex:0 0 32px;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--ink);color:var(--panel)}
+.pbody{min-width:0;flex:1}
+.ptitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ptitle b{font-size:16px}
+.plink{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:var(--accent)}
+.plink:hover{background:var(--accent-soft)}
+.pdesc{color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) 150px 150px auto;gap:16px;align-items:center;padding:14px 18px;border-top:1px solid var(--line);border-left:4px solid var(--c);cursor:pointer}
+.item.band-a{background:var(--panel)}
+.item.band-b{background:var(--band)}
+.item:hover{background:var(--soft)}
+.item .body{min-width:0}
+.item .nm{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .ds{color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .meta{min-width:0}
+.item .metas{display:contents}
+.untr{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:5px;padding:0 5px;margin-left:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;min-width:84px;padding:0 14px;border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--panel);color:var(--accent);border:1px solid var(--accent)}
+.btn.ghost:hover{background:var(--accent-soft)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.pager{padding:14px;text-align:center;border-top:1px solid var(--line)}
+
+/* overlaps */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 12px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:16px;align-items:start;padding:16px 0;border-top:1px solid var(--line)}
+.pair:first-child{border-top:0}
+.side{border:0;background:none;text-align:left;padding:0;cursor:pointer;min-width:0}
+.side .nm{font-weight:700;word-break:break-word}
+.side .ds{color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mid{text-align:center}
+.sim{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.simbar{height:6px;background:var(--soft);border-radius:4px;overflow:hidden;margin:4px 0 6px}
+.simbar i{display:block;height:100%;background:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:4px}
+.chip{font-size:12px;background:var(--soft);border-radius:6px;padding:1px 7px}
+.chip.bad{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.grp{padding:14px 0;border-top:1px solid var(--line)}
+.grp:first-child{border-top:0}
+.loc{font-size:12px;color:var(--muted);margin:4px 0 0 4px;word-break:break-all}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 12px;border-top:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(5,15,13,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:min(520px,100vw);background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .22s ease-out;overflow:auto;padding:24px;z-index:10}
+.drawer.on{transform:none}
+.drawer .x{position:absolute;top:14px;right:14px;width:44px;height:44px;border:0;background:none;border-radius:10px;cursor:pointer}
+.drawer .x:hover{background:var(--soft)}
+.drawer h3{font-size:20px;margin:12px 44px 6px 0;word-break:break-word}
+.drawer section{margin-top:20px}
+.drawer h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 6px}
+.code{display:flex;gap:8px;align-items:flex-start}
+.code code{flex:1;font:12px/1.5 ui-monospace,Consolas,monospace;background:var(--soft);border-radius:8px;padding:10px;word-break:break-all}
+.sim-list button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:8px;border-radius:8px;cursor:pointer;min-height:40px}
+.sim-list button:hover{background:var(--soft)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:20;font-weight:600}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.theme{position:absolute;top:22px;right:28px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:grid;place-items:center}
+main{position:relative}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* responsive */
+@media (max-width:1100px){
+  .item{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"tile body act" "tile meta act"}
+  .item .tile{grid-area:tile;align-self:start}.item .body{grid-area:body}.item .act{grid-area:act}
+  .item .metas{grid-area:meta;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:12;transform:translateX(-100%);transition:transform .22s ease-out;box-shadow:12px 0 40px rgba(0,0,0,.2)}
+  aside.on{transform:none}
+  #sideScrim{display:block;z-index:11}
+  .menu-btn{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;margin-bottom:14px}
+  main{padding:18px 16px 48px}
+  .theme{top:18px;right:16px}
+  .toolbar{grid-template-columns:1fr}
+  .seg-wrap{margin-left:0}
+  .pair{grid-template-columns:1fr}.mid{text-align:left}.chips{justify-content:flex-start}
+  .bar{grid-template-columns:minmax(0,140px) minmax(0,1fr) 34px;gap:10px}
+  h1{font-size:24px}
+}
+@media (max-width:520px){
+  .item{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"body act" "meta meta"}
+  .item .tile{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="side" aria-label="Menu">
+    <div class="brand"><picture><source srcset="__LOGO__" media="(prefers-reduced-motion: reduce)"><img class="logo" src="__LOGO_ANIM__" alt="" width="40" height="40"></picture>SkillScope</div>
+    <div class="flags" id="uiLang" role="group"></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="nav-h" id="navCatH"></div>
+    <nav class="nav" id="navCats"></nav>
+  </aside>
+  <div class="scrim" id="sideScrim"></div>
+
+  <main>
+    <button class="menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <button class="theme" id="theme" type="button"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16Z" fill="currentColor"/></svg></button>
+    <h1 id="title"></h1>
+    <p class="lead" id="lead"></p>
+
+    <div class="toolbar">
+      <label class="field"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr" id="qL"></span><input type="search" id="q" aria-labelledby="qL"></label>
+      <label class="field"><svg class="i" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/></svg><span class="sr" id="fPlatL"></span><select id="fPlat" aria-labelledby="fPlatL"></select></label>
+    </div>
+    <div class="filters">
+      <label class="field" style="min-height:44px"><span class="sr" id="fStatusL"></span><select id="fStatus" aria-labelledby="fStatusL"></select></label>
+      <label class="check"><input type="checkbox" id="dedupe" checked><span id="dedupeL"></span></label>
+      <div class="seg-wrap"><span class="muted" id="dlangL"></span><div class="seg" id="dlang" role="group"></div></div>
+    </div>
+
+    <div id="view"></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
+  <button class="x" id="dClose" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <div id="dBody"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const LSTORE={get(k){try{return localStorage.getItem(k)}catch(e){return null}}};
+const AVAIL_LANGS=[...new Set(["tr","en","zh","es",DATA.lang,...Object.keys(DATA.translations||{})])];
+const LANG=(()=>{const q=new URLSearchParams(location.search).get("lang"),saved=LSTORE.get("ss-lang");
+  return [q,saved,DATA.lang].find(l=>l&&AVAIL_LANGS.includes(l))||"en";})();
+document.documentElement.lang=LANG;
+function langName(l){try{return new Intl.DisplayNames([l],{type:"language"}).of(l).replace(/^./,c=>c.toUpperCase())}catch(e){return l}}
+const I18N = {
+  tr:{brandSub:"{n} kaynak · {d}",explore:"Keşfet",catalog:"Skill kataloğu",overlaps:"Çakışmalar",repos:"Repo karnesi",cats:"Kategoriler",
+    exploreLead:"Elindeki skill'lerin özeti: neler kurulu, neler sadece indirilmiş ve hangileri birbirinin işini yapıyor.",
+    catalogLead:"Tüm skill'ler, kategorilere göre gruplanmış. Satıra tıklayınca ayrıntılar açılır.",
+    overlapsLead:"Aynı işi yapmaya aday skill'ler. En önemlisi aktif çakışmalar: ikisi de aynı araçta yüklü.",
+    reposLead:"İndirdiğin her repo ne getiriyor: kaçı zaten kurulu, kaçı elindekiyle çakışıyor, kaçı gerçekten yeni.",
+    search:"Skill ara (ad, açıklama, repo)…",allPlat:"Tüm platformlar",stAll:"Tüm durumlar",stYes:"Kurulu",stNo:"Kurulu değil",stDup:"Başka yerde kurulu",
+    dedupe:"Kopyaları tek göster",dl:"Açıklama:",dOrig:"Orijinal",dTr:"Türkçe",untr:"çevrilmedi",
+    unique:"tekil skill",installed:"kurulu",downloaded:"sadece indirilmiş",live:"aktif çakışma",seeAll:"Hepsini gör →",
+    byTheme:"Temalara göre kurulum durumu",lgYes:"Kurulu",lgPart:"Kopyası/sürümü başka yerde kurulu",lgNo:"Kurulu değil",
+    more:"+{n} daha göster",openCat:"Tümünü gör ({n})",sYes:"Kurulu",sSame:"Başka yerde kurulu",sOther:"Farklı sürümü kurulu",sNo:"Kurulu değil",
+    open:"Aç",install:"Kur",copied:"Kurulum komutu kopyalandı. Terminale yapıştır.",copiedPath:"Kopyalandı",copy:"Kopyala",
+    sort:"Sırala",sCat:"Kategoriye göre",sName:"Ada göre",sRepo:"Repoya göre",nSkills:"{n} skill",empty:"Bu filtrede kayıt yok.",loadMore:"Daha fazla göster ({n})",
+    dCat:"Kategori",dAlso:"Ayrıca",dSrc:"Kaynak",dPath:"Konum",dSim:"Benzer skill'ler",dInst:"Kurulum komutu",dInstHelp:"Bu klasörü Claude Code'un kişisel skill klasörüne kopyalar. Sayfa dosya kopyalayamaz; komutu terminalde sen çalıştırırsın.",
+    none:"Benzer skill yok.",places:"{n} yerde",
+    tabLive:"Aktif çakışmalar",tabSib:"Aynı paket içi",tabDl:"İndirilen ↔ kurulu",tabOther:"Diğer benzerlikler",tabVer:"Aynı ad, farklı sürüm",tabCopy:"Birebir kopyalar",
+    hLive:"Farklı paketlerden gelen, ikisi de aynı araçta yüklü ve aynı işi tarif eden skill'ler. Aynı isteği kapmak için yarışırlar; birini kaldır ya da açıklamasını daralt.",
+    hSib:"Aynı paketin kardeş skill'leri. Genelde bilerek benzer yazılmıştır; yanlış kardeş seçiliyorsa bak.",
+    hDl:"İndirdiğin ama kurmadığın skill, zaten kurulu bir skill ile aynı işi yapıyor. Kurmadan önce fark katıp katmadığına bak.",
+    hOther:"Benzer işlevli ama aynı araçta birlikte yüklü olmayan skill'ler (bilgi amaçlı).",
+    hVer:"Aynı adı taşıyan ama içeriği farklı dosyalar. Hangisinin yüklendiği belirsiz olabilir.",
+    hCopy:"İçeriği birebir aynı dosyalar. Genelde zararsız önbellek kopyalarıdır.",
+    simPct:"benzerlik",sameRepo:"aynı repo",livePl:"ikisi de yüklü: {p}",variant:"Sürüm {i}",
+    rRepo:"Repo / plugin",rSrc:"Kaynak",rTop:"Baskın tema",rN:"Skill",rInst:"Kurulu",rOv:"Çakışan",rNew:"Yeni",menu:"Menü",theme:"Tema değiştir",close:"Kapat",
+    rStars:"Yıldız",rLic:"Lisans",noLic:"Lisans yok",uiLang:"Dil",licGh:"GitHub'a göre: {l}"},
+  en:{brandSub:"{n} sources · {d}",explore:"Explore",catalog:"Skill catalog",overlaps:"Overlaps",repos:"Repo report card",cats:"Categories",
+    exploreLead:"A summary of your skills: what is installed, what is only downloaded, and which ones do the same job.",
+    catalogLead:"Every skill, grouped by category. Click a row for details.",
+    overlapsLead:"Skills that compete for the same job. Live overlaps matter most: both are loaded in the same tool.",
+    reposLead:"What each downloaded repo brings: how much is installed, how much overlaps, how much is new.",
+    search:"Search skills (name, description, repo)…",allPlat:"All platforms",stAll:"All statuses",stYes:"Installed",stNo:"Not installed",stDup:"Installed elsewhere",
+    dedupe:"Collapse copies",dl:"Description:",dOrig:"Original",dTr:"English",untr:"not translated",
+    unique:"unique skills",installed:"installed",downloaded:"downloaded only",live:"live overlaps",seeAll:"See all →",
+    byTheme:"Install status by theme",lgYes:"Installed",lgPart:"Copy/version installed elsewhere",lgNo:"Not installed",
+    more:"+{n} more",openCat:"See all ({n})",sYes:"Installed",sSame:"Installed elsewhere",sOther:"Other version installed",sNo:"Not installed",
+    open:"Open",install:"Install",copied:"Install command copied. Paste it in a terminal.",copiedPath:"Copied",copy:"Copy",
+    sort:"Sort",sCat:"By category",sName:"By name",sRepo:"By repo",nSkills:"{n} skills",empty:"Nothing matches this filter.",loadMore:"Show more ({n})",
+    dCat:"Category",dAlso:"Also",dSrc:"Source",dPath:"Path",dSim:"Similar skills",dInst:"Install command",dInstHelp:"Copies this folder into Claude Code's personal skills folder. The page cannot copy files; you run the command in a terminal.",
+    none:"No similar skills.",places:"in {n} places",
+    tabLive:"Live overlaps",tabSib:"Within one package",tabDl:"Downloaded ↔ installed",tabOther:"Other similarities",tabVer:"Same name, different version",tabCopy:"Exact copies",
+    hLive:"Skills from different packages, both loaded in the same tool, describing the same job. They compete for the same requests: remove one or narrow its description.",
+    hSib:"Sibling skills of one package. Usually similar by design; check if the wrong sibling gets picked.",
+    hDl:"A skill you downloaded but did not install does the same job as one you have. Check whether it adds anything.",
+    hOther:"Similar skills that are not loaded together in one tool (for information).",
+    hVer:"Same name, different content. Which one loads may be unclear.",
+    hCopy:"Byte-identical files, usually harmless cache copies.",
+    simPct:"similar",sameRepo:"same repo",livePl:"both loaded: {p}",variant:"Version {i}",
+    rRepo:"Repo / plugin",rSrc:"Source",rTop:"Main theme",rN:"Skills",rInst:"Installed",rOv:"Overlap",rNew:"New",menu:"Menu",theme:"Toggle theme",close:"Close",
+    rStars:"Stars",rLic:"License",noLic:"No license",uiLang:"Language",licGh:"GitHub says: {l}"},
+  zh:{brandSub:"{n} 个来源 · {d}",explore:"概览",catalog:"技能目录",overlaps:"重叠",repos:"仓库成绩单",cats:"分类",
+    exploreLead:"你的技能概况：哪些已安装，哪些只是下载了，哪些在做同样的事。",
+    catalogLead:"所有技能，按分类分组。点击一行查看详情。",
+    overlapsLead:"争夺同一任务的技能。最重要的是“活跃重叠”：两者都加载在同一个工具中。",
+    reposLead:"每个下载的仓库带来了什么：多少已安装，多少有重叠，多少是全新的。",
+    search:"搜索技能（名称、描述、仓库）…",allPlat:"所有平台",stAll:"所有状态",stYes:"已安装",stNo:"未安装",stDup:"已在别处安装",
+    dedupe:"合并副本",dl:"描述：",dOrig:"原文",dTr:"中文",untr:"未翻译",
+    unique:"个独立技能",installed:"已安装",downloaded:"仅下载",live:"活跃重叠",seeAll:"查看全部 →",
+    byTheme:"按主题的安装状态",lgYes:"已安装",lgPart:"副本/其他版本已在别处安装",lgNo:"未安装",
+    more:"另外 {n} 个",openCat:"查看全部（{n}）",sYes:"已安装",sSame:"已在别处安装",sOther:"已安装其他版本",sNo:"未安装",
+    open:"打开",install:"安装",copied:"安装命令已复制，请粘贴到终端中运行。",copiedPath:"已复制",copy:"复制",
+    sort:"排序",sCat:"按分类",sName:"按名称",sRepo:"按仓库",nSkills:"{n} 个技能",empty:"没有符合筛选条件的结果。",loadMore:"显示更多（{n}）",
+    dCat:"分类",dAlso:"另属",dSrc:"来源",dPath:"路径",dSim:"相似技能",dInst:"安装命令",dInstHelp:"将此文件夹复制到 Claude Code 的个人技能文件夹。页面本身无法复制文件，需要你在终端中运行命令。",
+    none:"没有相似技能。",places:"{n} 处",
+    tabLive:"活跃重叠",tabSib:"同一包内",tabDl:"已下载 ↔ 已安装",tabOther:"其他相似",tabVer:"同名不同版本",tabCopy:"完全相同的副本",
+    hLive:"来自不同包、都加载在同一工具中、描述同一任务的技能。它们会争夺同一请求：删除其中一个，或缩小其描述范围。",
+    hSib:"同一包中的兄弟技能，通常是有意设计得相似；如果经常选错，值得检查。",
+    hDl:"你下载但未安装的技能，与已安装的某个技能做同样的事。安装前先确认它是否有新价值。",
+    hOther:"功能相似但并未在同一工具中同时加载的技能（仅供参考）。",
+    hVer:"名称相同但内容不同，实际加载哪一个可能不明确。",
+    hCopy:"内容完全相同的文件，通常是无害的缓存副本。",
+    simPct:"相似度",sameRepo:"同一仓库",livePl:"均已加载：{p}",variant:"版本 {i}",
+    rRepo:"仓库 / 插件",rSrc:"来源",rTop:"主要主题",rN:"技能",rInst:"已安装",rOv:"重叠",rNew:"新增",menu:"菜单",theme:"切换主题",close:"关闭",
+    rStars:"星标",rLic:"许可证",noLic:"无许可证",uiLang:"语言",licGh:"GitHub 显示：{l}"},
+  es:{brandSub:"{n} fuentes · {d}",explore:"Explorar",catalog:"Catálogo de skills",overlaps:"Solapamientos",repos:"Boletín de repos",cats:"Categorías",
+    exploreLead:"Resumen de tus skills: qué está instalado, qué solo está descargado y cuáles hacen el mismo trabajo.",
+    catalogLead:"Todas las skills, agrupadas por categoría. Haz clic en una fila para ver los detalles.",
+    overlapsLead:"Skills que compiten por la misma tarea. Lo más importante son los solapamientos activos: ambas se cargan en la misma herramienta.",
+    reposLead:"Qué aporta cada repo descargado: cuánto ya está instalado, cuánto se solapa y cuánto es nuevo.",
+    search:"Buscar skills (nombre, descripción, repo)…",allPlat:"Todas las plataformas",stAll:"Todos los estados",stYes:"Instalada",stNo:"No instalada",stDup:"Instalada en otro lugar",
+    dedupe:"Agrupar copias",dl:"Descripción:",dOrig:"Original",dTr:"Español",untr:"sin traducir",
+    unique:"skills únicas",installed:"instaladas",downloaded:"solo descargadas",live:"solapamientos activos",seeAll:"Ver todo →",
+    byTheme:"Estado de instalación por tema",lgYes:"Instalada",lgPart:"Copia/versión instalada en otro lugar",lgNo:"No instalada",
+    more:"+{n} más",openCat:"Ver todo ({n})",sYes:"Instalada",sSame:"Instalada en otro lugar",sOther:"Otra versión instalada",sNo:"No instalada",
+    open:"Abrir",install:"Instalar",copied:"Comando de instalación copiado. Pégalo en una terminal.",copiedPath:"Copiado",copy:"Copiar",
+    sort:"Ordenar",sCat:"Por categoría",sName:"Por nombre",sRepo:"Por repo",nSkills:"{n} skills",empty:"Nada coincide con este filtro.",loadMore:"Mostrar más ({n})",
+    dCat:"Categoría",dAlso:"También",dSrc:"Origen",dPath:"Ruta",dSim:"Skills similares",dInst:"Comando de instalación",dInstHelp:"Copia esta carpeta en la carpeta de skills personales de Claude Code. La página no puede copiar archivos; el comando lo ejecutas tú en una terminal.",
+    none:"No hay skills similares.",places:"en {n} lugares",
+    tabLive:"Solapamientos activos",tabSib:"Dentro de un paquete",tabDl:"Descargada ↔ instalada",tabOther:"Otras similitudes",tabVer:"Mismo nombre, otra versión",tabCopy:"Copias idénticas",
+    hLive:"Skills de paquetes distintos, ambas cargadas en la misma herramienta, que describen la misma tarea. Compiten por las mismas peticiones: elimina una o acota su descripción.",
+    hSib:"Skills hermanas de un mismo paquete. Suelen parecerse a propósito; revísalas si se elige la equivocada.",
+    hDl:"Una skill que descargaste pero no instalaste hace lo mismo que otra que ya tienes. Comprueba si aporta algo antes de instalarla.",
+    hOther:"Skills similares que no se cargan juntas en una misma herramienta (informativo).",
+    hVer:"Mismo nombre, contenido distinto. Puede no estar claro cuál se carga.",
+    hCopy:"Archivos idénticos byte a byte, normalmente copias de caché inofensivas.",
+    simPct:"similitud",sameRepo:"mismo repo",livePl:"ambas cargadas: {p}",variant:"Versión {i}",
+    rRepo:"Repo / plugin",rSrc:"Origen",rTop:"Tema principal",rN:"Skills",rInst:"Instaladas",rOv:"Solapadas",rNew:"Nuevas",menu:"Menú",theme:"Cambiar tema",close:"Cerrar",
+    rStars:"Estrellas",rLic:"Licencia",noLic:"Sin licencia",uiLang:"Idioma",licGh:"GitHub indica: {l}"}
+};
+const LANG_NAMES={tr:"Türkçe",en:"English",zh:"中文",es:"Español"};
+const T=Object.assign({},I18N.en,I18N[LANG]||{},I18N[LANG]?{}:{dTr:langName(LANG)});
+
+
+/* ---------- helpers & indexes ---------- */
+const fmt=(s,o)=>s.replace(/\{(\w+)\}/g,(_,k)=>o[k]);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const S=DATA.skills, CAT={}; DATA.categories.forEach((c,i)=>{CAT[c.id]=c;c.order=i;});
+const catLabel=id=>CAT[id]?(CAT[id].label[LANG]||CAT[id].label.en):id;
+const byHash={}; S.forEach(s=>(byHash[s.hash]=byHash[s.hash]||[]).push(s));
+const repOf=s=>byHash[s.hash][0];
+const isActive=id=>byHash[S[id].hash].some(z=>z.active);
+const neighbours={}; DATA.overlaps.pairs.forEach(p=>{(neighbours[p.a]=neighbours[p.a]||[]).push([p.b,p.sim]);(neighbours[p.b]=neighbours[p.b]||[]).push([p.a,p.sim]);});
+const statusOf=s=>s.installed==="yes"?"yes":s.installed==="no"?"no":"part";
+const statusLabel=s=>({yes:T.sYes,same:T.sSame,"other-version":T.sOther,no:T.sNo})[s.installed];
+
+/* icons (simple line icons, one per category) */
+const P={
+  academic:'<path d="M3 9l9-5 9 5-9 5-9-5Z"/><path d="M7 11v5c3 2 7 2 10 0v-5"/>',
+  marketing:'<path d="M4 10v4h3l6 4V6L7 10H4Z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+  video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',
+  audio:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  visual:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16" cy="10" r="1.3"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
+  frontend:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
+  dev:'<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/>',
+  security:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/>',
+  docs:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 13h8M8 17h6"/>',
+  data:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  agent:'<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 16.5h6"/>',
+  productivity:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/>',
+  bio:'<path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12s10 6 10 6"/><path d="M8 7h8M8 17h8"/>',
+  finance:'<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.8 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/>',
+  writing:'<path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13 7 4 4"/>',
+  web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  other:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  explore:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-9Z"/>',
+  catalog:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  overlaps:'<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>',
+  repos:'<path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h12"/>',
+  check:'<path d="m5 12 4 4 10-10"/>',star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',circle:'<circle cx="12" cy="12" r="7"/>',half:'<circle cx="12" cy="12" r="7"/><path d="M12 5v14"/>',
+  ext:'<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>'
+};
+const icon=(k,cls="i")=>`<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[k]||P.other}</svg>`;
+const tile=(cat,sm)=>`<span class="tile${sm?" sm":""} ic" style="--c:${CAT[cat].color}">${icon(cat)}</span>`;
+const pill=s=>{const st=statusOf(s);return `<span class="pill p-${st}">${icon(st==="yes"?"check":st==="part"?"half":"circle")}${statusLabel(s)}</span>`;};
+
+/* ---------- description language ---------- */
+let descMode=store.get("ss-desc")||"tr";
+let browserTr={}; try{browserTr=JSON.parse(store.get("ss-tr-"+LANG)||"{}")}catch(e){}
+const translated=s=>(!s.description||s.desc_lang===LANG)?s.description:((DATA.translations[LANG]||{})[s.desc_key]||browserTr[s.desc_key]||null);
+function descHTML(s){
+  if(descMode==="orig")return esc(s.description);
+  const t=translated(s); return t==null?esc(s.description)+` <span class="untr">${T.untr}</span>`:esc(t);
+}
+let translating=false;
+async function browserTranslate(){
+  if(translating||!("Translator" in self))return;
+  const todo=[...new Map(S.filter(s=>s.description&&translated(s)==null&&s.desc_lang!=="?").map(s=>[s.desc_key,s])).values()];
+  if(!todo.length)return; translating=true;
+  try{const bySrc={};todo.forEach(s=>(bySrc[s.desc_lang]=bySrc[s.desc_lang]||[]).push(s));
+    for(const [src,list] of Object.entries(bySrc)){
+      if(await Translator.availability({sourceLanguage:src,targetLanguage:LANG})==="unavailable")continue;
+      const tr=await Translator.create({sourceLanguage:src,targetLanguage:LANG});
+      let n=0;for(const s of list){browserTr[s.desc_key]=await tr.translate(s.description);if(++n%20===0){store.set("ss-tr-"+LANG,JSON.stringify(browserTr));render();}}}
+    store.set("ss-tr-"+LANG,JSON.stringify(browserTr));
+  }catch(e){console.warn("browser translation unavailable",e)}
+  translating=false; render();
+}
+
+/* ---------- filters ---------- */
+$("q").placeholder=T.search; $("qL").textContent=T.search; $("fPlatL").textContent=T.allPlat; $("fStatusL").textContent=T.stAll;
+$("dedupeL").textContent=T.dedupe; const FLAGS={
+  tr:'<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/><path d="m16.2 10 4.6-1.5-2.8 3.9V7.6l2.8 3.9z" fill="#fff"/></svg>',
+  en:'<svg viewBox="0 0 60 40"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0L0 40" stroke="#C8102E" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#C8102E" stroke-width="7"/></svg>',
+  zh:'<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#DE2910"/><path d="m5 2.5 1.1 3.4H9.7L6.8 8l1.1 3.4L5 9.3l-2.9 2.1L3.2 8 .3 5.9h3.6z" fill="#FFDE00"/><circle cx="10" cy="2" r=".9" fill="#FFDE00"/><circle cx="12" cy="4" r=".9" fill="#FFDE00"/><circle cx="12" cy="7" r=".9" fill="#FFDE00"/><circle cx="10" cy="9" r=".9" fill="#FFDE00"/></svg>',
+  es:'<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#AA151B"/><rect y="5" width="30" height="10" fill="#F1BF00"/></svg>'};
+const FLAG_ORDER=["tr","en","zh","es"];
+$("uiLang").setAttribute("aria-label",T.uiLang);
+$("uiLang").innerHTML=[...FLAG_ORDER,...AVAIL_LANGS.filter(l=>!FLAG_ORDER.includes(l))].filter(l=>AVAIL_LANGS.includes(l))
+  .map(l=>`<button type="button" data-lang="${l}" aria-pressed="${l===LANG}" title="${esc(LANG_NAMES[l]||langName(l))}" aria-label="${esc(LANG_NAMES[l]||langName(l))}">${FLAGS[l]||`<span class="code">${esc(l.toUpperCase())}</span>`}</button>`).join("");
+$("uiLang").addEventListener("click",e=>{const b=e.target.closest("[data-lang]");if(!b||b.dataset.lang===LANG)return;store.set("ss-lang",b.dataset.lang);
+  const u=new URL(location.href);if(u.searchParams.has("lang")){u.searchParams.delete("lang");location.replace(u.toString());}else location.reload();}); $("dlangL").textContent=T.dl; $("navCatH").textContent=T.cats;
+$("menuBtn").setAttribute("aria-label",T.menu); $("theme").setAttribute("aria-label",T.theme); $("dClose").setAttribute("aria-label",T.close);
+$("fPlat").innerHTML=`<option value="">${T.allPlat}</option>`+[...new Set(S.map(s=>s.source))].map(p=>`<option>${esc(p)}</option>`).join("");
+$("fStatus").innerHTML=[["",T.stAll],["yes",T.stYes],["no",T.stNo],["dup",T.stDup]].map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+function filtered(){
+  const q=$("q").value.trim().toLocaleLowerCase(LANG), pl=$("fPlat").value, st=$("fStatus").value, dd=$("dedupe").checked;
+  let r=S.filter(s=>(!pl||s.source===pl)&&(!st||(st==="yes"&&s.installed==="yes")||(st==="no"&&s.installed==="no")||(st==="dup"&&statusOf(s)==="part"))
+    &&(!q||(s.full+" "+s.title+" "+s.description+" "+(translated(s)||"")+" "+s.repo+" "+((DATA.packages||{})[s.pkg]||{}).title).toLocaleLowerCase(LANG).includes(q)));
+  if(dd){const seen=new Set();r=r.filter(s=>seen.has(s.hash)?false:(seen.add(s.hash),true));}
+  return r;
+}
+function drawLang(){$("dlang").innerHTML=[["orig",T.dOrig],["tr",T.dTr]].map(([k,l])=>`<button type="button" data-m="${k}" aria-pressed="${descMode===k}">${l}</button>`).join("");}
+$("dlang").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;descMode=b.dataset.m;store.set("ss-desc",descMode);drawLang();render();if(descMode==="tr")browserTranslate();});
+let qTimer; $("q").addEventListener("input",()=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{limit=60;render();},120);});
+["fPlat","fStatus","dedupe"].forEach(id=>$(id).addEventListener("input",()=>{limit=60;render();}));
+
+/* ---------- routing: #explore  #catalog  #catalog/<cat>  #overlaps  #repos ---------- */
+let route={view:"explore",cat:null}, limit=60, otab="live", olimit=40;
+function go(view,cat=null){route={view,cat};limit=60;history.replaceState(null,"","#"+view+(cat?"-"+cat:""));closeSide();render();
+  document.querySelector("main").scrollIntoView({block:"start"});}
+function readHash(){const [v,c]=decodeURIComponent(location.hash.slice(1)).split(/[-\/]/);
+  route={view:["explore","catalog","overlaps","repos"].includes(v)?v:"explore",cat:CAT[c]?c:null};}
+
+const liveCount=()=>DATA.overlaps.pairs.filter(p=>p.live.length&&!p.same_repo).length+DATA.overlaps.versions.filter(v=>v.live.length).length;
+function drawNav(rows){
+  const item=(v,label,n,alert)=>`<button type="button" data-go="${v}" aria-current="${route.view===v&&!route.cat}">${icon(v)}<span>${label}</span>${n!=null?`<span class="n${alert?" alert":""}">${n}</span>`:""}</button>`;
+  $("nav").innerHTML=item("explore",T.explore)+item("catalog",T.catalog,rows.length)+item("overlaps",T.overlaps,liveCount(),true)+item("repos",T.repos);
+  const cnt={};rows.forEach(s=>cnt[s.category]=(cnt[s.category]||0)+1);
+  $("navCats").innerHTML=DATA.categories.filter(c=>cnt[c.id]).sort((a,b)=>cnt[b.id]-cnt[a.id]).map(c=>
+    `<button type="button" class="cat" data-go="catalog" data-cat="${c.id}" style="--c:${c.color}" aria-current="${route.cat===c.id}"><span class="ic">${icon(c.id)}</span><span>${esc(catLabel(c.id))}</span><span class="n">${cnt[c.id]}</span></button>`).join("");
+}
+document.querySelector("aside").addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(b)go(b.dataset.go,b.dataset.cat||null);});
+
+/* ---------- views ---------- */
+function render(){
+  const rows=filtered(); drawNav(rows);
+  const V={explore:viewExplore,catalog:viewCatalog,overlaps:viewOverlaps,repos:viewRepos}[route.view];
+  const [title,lead]={explore:[T.explore,T.exploreLead],catalog:[route.cat?catLabel(route.cat):T.catalog,T.catalogLead],overlaps:[T.overlaps,T.overlapsLead],repos:[T.repos,T.reposLead]}[route.view];
+  $("title").textContent=title; $("lead").textContent=lead+"  ·  "+fmt(T.brandSub,{n:DATA.sources.length,d:DATA.generated});
+  $("view").innerHTML=V(rows);
+}
+
+function viewExplore(rows){
+  const uniq=new Set(S.map(s=>s.hash)).size, inst=new Set(S.filter(s=>s.active).map(s=>s.hash)).size, dl=new Set(S.filter(s=>s.installed==="no").map(s=>s.hash)).size, live=liveCount();
+  const stat=(n,l,act,alert)=>`<button type="button" class="stat${alert&&n?" alert":""}" data-act="${act}"><b>${n}</b><span>${l}</span>${alert&&n?`<span class="go">${T.seeAll}</span>`:""}</button>`;
+  const groups={};rows.forEach(s=>(groups[s.category]=groups[s.category]||[]).push(s));
+  const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length), max=Math.max(1,...order.map(k=>groups[k].length));
+  const bars=order.map(id=>{const g=groups[id],c={yes:0,part:0,no:0};g.forEach(s=>c[statusOf(s)]++);const w=v=>(v/max*100).toFixed(2)+"%";
+    return `<button type="button" class="bar" data-cat="${id}" style="--c:${CAT[id].color}"><span class="t"><span class="ic">${icon(id)}</span><span>${esc(catLabel(id))}</span></span>
+      <span class="track" aria-label="${T.lgYes} ${c.yes}, ${T.lgPart} ${c.part}, ${T.lgNo} ${c.no}"><i class="s-yes" style="width:${w(c.yes)}"></i><i class="s-part" style="width:${w(c.part)}"></i><i class="s-no" style="width:${w(c.no)}"></i></span><span class="n">${g.length}</span></button>`}).join("");
+  const cards=order.map(id=>{const g=sortRows(groups[id],"name").sort((a,b)=>(statusOf(a)==="yes"?0:1)-(statusOf(b)==="yes"?0:1));
+    return `<article class="ccard" style="--c:${CAT[id].color}"><header>${tile(id,true)}<b>${esc(catLabel(id))}</b><span class="count">${g.length}</span></header>
+      <ul>${g.slice(0,6).map(s=>`<li><button type="button" data-id="${s.id}"><span class="dot ${statusOf(s)}" title="${esc(statusLabel(s))}"></span><span class="nm" title="${esc(s.full)}">${esc(s.title)}</span></button></li>`).join("")}</ul>
+      <footer><button type="button" data-cat="${id}">${g.length>6?fmt(T.more,{n:g.length-6}):fmt(T.openCat,{n:g.length})}</button></footer></article>`}).join("");
+  return `<div class="stats">${stat(uniq,T.unique,"catalog")}${stat(inst,T.installed,"st:yes")}${stat(dl,T.downloaded,"st:no")}${stat(live,T.live,"overlaps",1)}</div>
+    <section class="panel"><h2>${T.byTheme}</h2><div class="bars" style="margin-top:12px">${bars||`<div class="empty">${T.empty}</div>`}</div>
+    <div class="legend"><span><i class="s-yes"></i>${T.lgYes}</span><span><i class="s-part"></i>${T.lgPart}</span><span><i class="s-no"></i>${T.lgNo}</span></div></section>
+    <div class="cgrid">${cards}</div>`;
+}
+
+function sortRows(rows,by){
+  const nm=(a,b)=>a.full.localeCompare(b.full,LANG);
+  if(by==="cat"){const cnt={};rows.forEach(s=>cnt[s.category]=(cnt[s.category]||0)+1);return rows.sort((a,b)=>(cnt[b.category]-cnt[a.category])||(CAT[a.category].order-CAT[b.category].order)||nm(a,b));}
+  if(by==="repo")return rows.sort((a,b)=>(a.source+a.repo).localeCompare(b.source+b.repo,LANG)||nm(a,b));
+  return rows.sort(nm);
+}
+let sortBy="cat";
+const PKG=DATA.packages||{};
+const pkgOf=s=>PKG[s.pkg]||{title:s.repo,author:"",description:"",url:"",kind:"local"};
+function pkgDesc(p){
+  if(!p.description)return "";
+  if(descMode==="orig"||p.desc_lang===LANG)return esc(p.description);
+  return esc((DATA.translations[LANG]||{})[p.desc_key]||browserTr[p.desc_key]||p.description);
+}
+const nfmt=new Intl.NumberFormat(LANG,{notation:"compact",maximumFractionDigits:1});
+const starsHTML=p=>p.stars==null?"":`<span class="stars" title="${p.stars.toLocaleString(LANG)}">${icon("star")}${nfmt.format(p.stars)}</span>`;
+function licHTML(p,showNone){
+  const l=p.license||"";
+  if(!l)return showNone?`<span class="lic none">${T.noLic}</span>`:"";
+  const cls=l==="MIT"?"mit":/NC|Noncommercial|Proprietary|Other/i.test(l)?"warn":"";
+  const note=p.gh_license&&p.gh_license!==l?fmt(T.licGh,{l:p.gh_license}):"";
+  return `<span class="lic ${cls}" title="${esc(note||l)}">${esc(l)}${note?" *":""}</span>`;
+}
+function pkgHead(s,n){
+  const p=pkgOf(s), c=CAT[s.category].color, init=(p.title||"?").replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,"").slice(0,2).toUpperCase();
+  return `<div class="phead" style="--c:${c}"><span class="pav">${esc(init)}</span>
+    <div class="pbody"><div class="ptitle"><b>${esc(p.title)}</b>${p.author?`<span class="muted small">${esc(p.author)}</span>`:""}${starsHTML(p)}${licHTML(p,p.kind!=="local")}<span class="count">${n}</span>
+      ${p.url?`<a class="plink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(p.title)}: GitHub">${icon("ext")}</a>`:""}</div>
+      ${p.description?`<div class="pdesc">${pkgDesc(p)}</div>`:""}</div></div>`;
+}
+function viewCatalog(rows){
+  if(route.cat)rows=rows.filter(s=>s.category===route.cat);
+  const by=route.cat&&sortBy==="cat"?"repo":sortBy;
+  const nm=(a,b)=>a.title.localeCompare(b.title,LANG);
+  const pt=s=>pkgOf(s).title;
+  if(by==="cat"){const cnt={};rows.forEach(s=>cnt[s.category]=(cnt[s.category]||0)+1);
+    rows.sort((a,b)=>(cnt[b.category]-cnt[a.category])||(CAT[a.category].order-CAT[b.category].order)||pt(a).localeCompare(pt(b),LANG)||nm(a,b));}
+  else if(by==="repo")rows.sort((a,b)=>pt(a).localeCompare(pt(b),LANG)||nm(a,b));
+  else rows.sort(nm);
+  // size of each (category, package) block for the counters
+  const blk={}; rows.forEach(s=>{const k=(by==="cat"?s.category:"")+"|"+s.pkg;blk[k]=(blk[k]||0)+1;});
+  let band=1,prevCat=null,prevPkg=null,html="";
+  rows.slice(0,limit).forEach((s,i)=>{
+    if(by==="cat"&&s.category!==prevCat){band^=1;prevPkg=null;
+      html+=`<div class="ghead" style="--c:${CAT[s.category].color}"><span class="ic">${icon(s.category)}</span>${esc(catLabel(s.category))}</div>`;}
+    const pk=(by==="cat"?s.category:"")+"|"+s.pkg;
+    if(by!=="name"&&pk!==prevPkg){if(by==="repo")band^=1;html+=pkgHead(s,blk[pk]);}
+    if(by==="name")band=i%2;
+    prevCat=s.category; prevPkg=pk;
+    const st=statusOf(s), copies=byHash[s.hash].length;
+    html+=`<div class="item band-${band?"b":"a"}" style="--c:${CAT[s.category].color}" data-id="${s.id}" role="button" tabindex="0">
+      ${tile(s.category)}
+      <div class="body"><div class="nm" title="${esc(s.full)}">${esc(s.title)}</div><div class="ds">${descHTML(s)}</div></div>
+      <div class="metas"><div class="meta">${by==="name"?`<span class="tag">${esc(pt(s))}</span>`:`<span class="muted small">${esc(s.source)}</span>`}${copies>1&&$("dedupe").checked?`<br><span class="muted small">${fmt(T.places,{n:copies})}</span>`:""}</div>
+      <div class="meta">${pill(s)}</div></div>
+      <div class="act">${st==="no"?`<button type="button" class="btn primary" data-install="${s.id}">${icon("dl")}${T.install}</button>`:`<button type="button" class="btn ghost" data-id="${s.id}">${T.open} ${icon("ext")}</button>`}</div></div>`;
+  });
+  const sortSel=`<label class="field" style="min-height:40px"><span class="muted small">${T.sort}</span><select id="sortBy">${[["cat",T.sCat],["repo",T.sRepo],["name",T.sName]].map(([v,l])=>`<option value="${v}"${v===sortBy?" selected":""}>${l}</option>`).join("")}</select></label>`;
+  return `<div class="cat-head"><h2>${fmt(T.nSkills,{n:rows.length})}</h2>${sortSel}</div>
+    <div class="list">${html||`<div class="empty">${T.empty}</div>`}${rows.length>limit?`<div class="pager"><button type="button" class="btn ghost" id="loadMore">${fmt(T.loadMore,{n:rows.length-limit})}</button></div>`:""}</div>`;
+}
+
+const TABS=[["live",T.tabLive,T.hLive],["sib",T.tabSib,T.hSib],["dl",T.tabDl,T.hDl],["other",T.tabOther,T.hOther],["ver",T.tabVer,T.hVer],["copy",T.tabCopy,T.hCopy]];
+function overlapItems(tab,rows){
+  const P=DATA.overlaps.pairs, vis=new Set(rows.map(s=>s.hash)), ok=p=>vis.has(S[p.a].hash)||vis.has(S[p.b].hash);
+  if(tab==="live")return P.filter(p=>p.live.length&&!p.same_repo&&ok(p));
+  if(tab==="sib")return P.filter(p=>p.live.length&&p.same_repo&&ok(p));
+  if(tab==="dl")return P.filter(p=>!p.live.length&&isActive(p.a)!==isActive(p.b)&&ok(p));
+  if(tab==="other")return P.filter(p=>!p.live.length&&isActive(p.a)===isActive(p.b)&&ok(p));
+  if(tab==="ver")return DATA.overlaps.versions.filter(v=>v.variants.flat().some(i=>vis.has(S[i].hash)));
+  return DATA.overlaps.copies.filter(g=>vis.has(S[g[0]].hash));
+}
+const plats=l=>l.map(x=>DATA.platforms[x]||x).join(", ");
+function viewOverlaps(rows){
+  const tabs=`<div class="seg tabs" role="group">${TABS.map(([k,l])=>`<button type="button" data-otab="${k}" aria-pressed="${otab===k}">${l} (${overlapItems(k,rows).length})</button>`).join("")}</div>`;
+  const items=overlapItems(otab,rows), page=items.slice(0,olimit);
+  const side=id=>{const s=S[id];return `<button type="button" class="side" data-id="${id}"><div style="display:flex;gap:10px;align-items:center">${tile(s.category,true)}<div style="min-width:0"><div class="nm">${esc(s.title)}</div><div class="muted small">${esc(pkgOf(s).title)} · ${esc(catLabel(s.category))}</div></div></div><div class="ds" style="margin-top:6px">${descHTML(s)}</div></button>`;};
+  let h;
+  if(otab==="ver")h=page.map(v=>`<div class="grp"><b>${esc(v.name)}</b> ${v.live.length?`<span class="chip bad">${fmt(T.livePl,{p:plats(v.live)})}</span>`:""}${v.variants.map((g,i)=>`<div class="loc">${fmt(T.variant,{i:i+1})}: ${g.map(id=>`${esc(S[id].source)} · ${esc(S[id].path)}`).join("<br>")}</div>`).join("")}</div>`).join("");
+  else if(otab==="copy")h=page.map(g=>`<div class="grp"><b>${esc(S[g[0]].full)}</b> <span class="chip">${fmt(T.places,{n:g.length})}</span>${g.map(id=>`<div class="loc">${esc(S[id].source)} · ${esc(S[id].path)}</div>`).join("")}</div>`).join("");
+  else h=page.map(p=>`<div class="pair">${side(p.a)}<div class="mid"><div class="sim">${Math.round(p.sim*100)}%</div><div class="simbar"><i style="width:${Math.min(100,p.sim*100)}%"></i></div><div class="muted small">${T.simPct}</div>
+      <div class="chips">${p.shared.slice(0,5).map(t=>`<span class="chip">${esc(t)}</span>`).join("")}</div>
+      ${p.live.length?`<div class="chips"><span class="chip bad">${fmt(T.livePl,{p:plats(p.live)})}</span></div>`:""}${p.same_repo?`<div class="chips"><span class="chip">${T.sameRepo}</span></div>`:""}</div>${side(p.b)}</div>`).join("");
+  return `${tabs}<section class="panel"><p class="muted" style="margin:0 0 8px">${TABS.find(t=>t[0]===otab)[2]}</p>${h||`<div class="empty">${T.empty}</div>`}
+    ${items.length>olimit?`<div class="pager"><button type="button" class="btn ghost" id="oMore">${fmt(T.loadMore,{n:items.length-olimit})}</button></div>`:""}</section>`;
+}
+
+function viewRepos(){
+  const pairBy={};DATA.overlaps.pairs.forEach(p=>[[p.a,p.b],[p.b,p.a]].forEach(([x,y])=>{if(isActive(y))(pairBy[x]=pairBy[x]||new Set()).add(y);}));
+  const R={};S.forEach(s=>{const k=s.pkg;(R[k]=R[k]||{repo:pkgOf(s).title,author:pkgOf(s).author,url:pkgOf(s).url,p:pkgOf(s),source:s.source,m:new Map()}).m.set(s.hash,s);});
+  const rows=Object.values(R).map(r=>{const l=[...r.m.values()],inst=l.filter(s=>s.installed!=="no").length,ov=l.filter(s=>s.installed==="no"&&pairBy[repOf(s).id]).length,c={};
+    l.forEach(s=>c[s.category]=(c[s.category]||0)+1);return {...r,n:l.length,inst,ov,nw:l.length-inst-ov,top:Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0],act:l[0].active};}).sort((a,b)=>a.act-b.act||((b.p.stars||-1)-(a.p.stars||-1))||b.n-a.n);
+  return `<section class="panel tbl-wrap"><table><thead><tr><th>${T.rRepo}</th><th class="n">${T.rStars}</th><th>${T.rLic}</th><th>${T.rSrc}</th><th>${T.rTop}</th><th class="n">${T.rN}</th><th class="n">${T.rInst}</th><th class="n">${T.rOv}</th><th class="n">${T.rNew}</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td><b>${esc(r.repo)}</b>${r.author?`<div class="muted small">${esc(r.author)}</div>`:""}</td><td class="n">${starsHTML(r.p)||"-"}</td><td>${licHTML(r.p,r.p.kind!=="local")||"-"}</td><td class="muted">${esc(r.source)}</td><td><span style="display:inline-flex;gap:8px;align-items:center;--c:${CAT[r.top].color}"><span class="ic" style="color:var(--c)">${icon(r.top)}</span>${esc(catLabel(r.top))}</span></td><td class="n">${r.n}</td><td class="n">${r.act?"-":r.inst}</td><td class="n">${r.act?"-":r.ov}</td><td class="n">${r.act?"-":`<b>${r.nw}</b>`}</td></tr>`).join("")+`</tbody></table></section>`;
+}
+
+/* ---------- interactions inside the view ---------- */
+$("view").addEventListener("click",e=>{
+  const t=e.target;
+  const inst=t.closest("[data-install]"); if(inst){e.stopPropagation();copyText(installCmd(S[+inst.dataset.install]),T.copied);return;}
+  const act=t.closest("[data-act]"); if(act){const a=act.dataset.act;if(a.startsWith("st:")){$("fStatus").value=a.slice(3);go("catalog");}else go(a);return;}
+  const cat=t.closest("[data-cat]"); if(cat){go("catalog",cat.dataset.cat);return;}
+  const ot=t.closest("[data-otab]"); if(ot){otab=ot.dataset.otab;olimit=40;render();return;}
+  if(t.closest("#loadMore")){limit+=60;render();return;}
+  if(t.closest("#oMore")){olimit+=40;render();return;}
+  const it=t.closest("[data-id]"); if(it)openDrawer(+it.dataset.id,it);
+});
+$("view").addEventListener("keydown",e=>{const it=e.target.closest(".item[data-id]");if(it&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDrawer(+it.dataset.id,it);}});
+$("view").addEventListener("input",e=>{if(e.target.id==="sortBy"){sortBy=e.target.value;render();}});
+
+/* ---------- drawer ---------- */
+const installCmd=s=>{const name=s.path.split(/[\\/]/).pop();
+  return /^[A-Za-z]:\\/.test(s.path)?`Copy-Item -Recurse "${s.path}" "$HOME\\.claude\\skills\\${name}"`:`cp -r "${s.path}" ~/.claude/skills/${name}`;};
+let lastFocus=null;
+function openDrawer(id,from){
+  const s=S[id], copies=byHash[s.hash], nb=(neighbours[repOf(s).id]||[]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  lastFocus=from||document.activeElement;
+  $("dBody").innerHTML=`${tile(s.category)}<h3 id="dTitle">${esc(s.title)}</h3><div class="muted small" style="margin:-2px 0 8px;font-family:ui-monospace,Consolas,monospace">${esc(s.full)}</div>${pill(s)}
+    <section><p style="margin:0">${descHTML(s)}</p></section>
+    <section><h4>${T.dCat}</h4><span style="display:inline-flex;gap:8px;align-items:center;color:${CAT[s.category].color}">${icon(s.category)}<b style="color:var(--ink)">${esc(catLabel(s.category))}</b></span>
+      ${s.secondary.length?`<span class="muted small" style="margin-left:10px">${T.dAlso}: ${s.secondary.map(c=>esc(catLabel(c))).join(", ")}</span>`:""}</section>
+    <section><h4>${T.dSrc}</h4><b>${esc(pkgOf(s).title)}</b> ${starsHTML(pkgOf(s))} ${licHTML(pkgOf(s),pkgOf(s).kind!=="local")}${pkgOf(s).author?` <span class="muted">· ${esc(pkgOf(s).author)}</span>`:""}${pkgOf(s).url?` · <a href="${esc(pkgOf(s).url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">GitHub</a>`:""}<div class="muted small">${esc(s.source)}</div>${pkgOf(s).description?`<p class="muted small" style="margin:6px 0 0">${pkgDesc(pkgOf(s))}</p>`:""}</section>
+    <section><h4>${T.dPath}</h4>${copies.map(x=>`<div class="code" style="margin-bottom:6px"><code>${esc(x.path)}</code><button type="button" class="btn ghost" style="min-width:44px" data-copy="${esc(x.path)}" aria-label="${T.copy}">${icon("copy")}</button></div>`).join("")}</section>
+    ${s.installed==="no"?`<section><h4>${T.dInst}</h4><div class="code"><code>${esc(installCmd(s))}</code><button type="button" class="btn primary" data-copy="${esc(installCmd(s))}">${icon("copy")}${T.copy}</button></div><p class="muted small">${T.dInstHelp}</p></section>`:""}
+    <section class="sim-list"><h4>${T.dSim}</h4>${nb.length?nb.map(([nid,sim])=>`<button type="button" data-nid="${nid}">${tile(S[nid].category,true)}<span style="flex:1;min-width:0"><b>${esc(S[nid].title)}</b><br><span class="muted small">${esc(pkgOf(S[nid]).title)}</span></span><span class="chip">${Math.round(sim*100)}%</span></button>`).join(""):`<p class="muted">${T.none}</p>`}</section>`;
+  $("drawer").hidden=false; requestAnimationFrame(()=>{$("drawer").classList.add("on");$("scrim").classList.add("on");$("dClose").focus();});
+}
+function closeDrawer(){$("drawer").classList.remove("on");$("scrim").classList.remove("on");setTimeout(()=>{$("drawer").hidden=true;},220);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+$("dClose").onclick=closeDrawer; $("scrim").onclick=closeDrawer;
+$("drawer").addEventListener("click",e=>{const c=e.target.closest("[data-copy]");if(c){copyText(c.dataset.copy,T.copiedPath);return;}const n=e.target.closest("[data-nid]");if(n)openDrawer(+n.dataset.nid,lastFocus);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("drawer").hidden)closeDrawer();else closeSide();}});
+
+function copyText(text,msg){
+  const done=()=>toast(msg);
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).then(done,fallback);else fallback();
+  function fallback(){const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch(e){}ta.remove();}
+}
+let tT;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),2600);}
+
+/* ---------- side menu (mobile) and theme ---------- */
+function closeSide(){$("side").classList.remove("on");$("sideScrim").classList.remove("on");$("menuBtn").setAttribute("aria-expanded","false");}
+$("menuBtn").onclick=()=>{$("side").classList.add("on");$("sideScrim").classList.add("on");$("menuBtn").setAttribute("aria-expanded","true");};
+$("sideScrim").onclick=closeSide;
+matchMedia("(min-width:861px)").addEventListener("change",e=>{if(e.matches)closeSide();});
+(function(){const t=store.get("ss-theme");if(t)document.documentElement.dataset.theme=t;
+  $("theme").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const nx=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=nx;store.set("ss-theme",nx);};})();
+
+/* ---------- init ---------- */
+drawLang(); readHash(); render();
+window.addEventListener("hashchange",()=>{readHash();render();});
+if(descMode==="tr")browserTranslate();
+</script>
+</body>
+</html>

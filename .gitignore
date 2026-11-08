@@ -1,0 +1,7 @@
+output/
+__pycache__/
+*.pyc
+.claude/
+translations/
+assets/logo-full.gif
+cache/
