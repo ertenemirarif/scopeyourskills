@@ -170,3 +170,9 @@ class RegressionsRound2(unittest.TestCase):  # findings from the re-review
         tpl = (ROOT / "template.html").read_text(encoding="utf-8")
         self.assertIn("filtered(true)", tpl)            # repo report sees every copy
         self.assertIn("search(/[-/]/)", tpl)             # #catalog/docs still works
+
+
+class RegressionsRound3(unittest.TestCase):
+    def test_category_lookup_ignores_object_prototype(self):
+        tpl = (ROOT / "template.html").read_text(encoding="utf-8")
+        self.assertIn("const CAT=Object.create(null);", tpl)   # #catalog-constructor must not match
